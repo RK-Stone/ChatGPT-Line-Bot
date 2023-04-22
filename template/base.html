@@ -3,7 +3,6 @@
 <head>
 
     {% load static %}
-    <title>ChatGPT & LineBot 賴學習</title>
     <link href="{% static 'css/style.css' %}" rel="stylesheet" type="text/css" />
 
     <!-- Required meta tags -->
@@ -15,9 +14,17 @@
     <style>
         body {text-align: center;}
     </style>
+  
+    <title>{% block title %}ChatGPT & LineBot 賴學習{% endblock %}</title>
+  
+    {% block head %}
+    {% endblock %}
 </head>
 
+  
 <body class="bg-light">
+    {% block main %}
+    {% endblock %}
         <div class="container">
         <nav class="navbar navbar-expand-md navbar-dark bg-secondary fixed-top">
           <a class="navbar-brand" herf="/">ChatGPT & LineBot 賴學習</a>
@@ -45,7 +52,6 @@
         </nav>
         </div>
     </div>
-
   
     <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
