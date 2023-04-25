@@ -2,17 +2,19 @@ from dotenv import load_dotenv
 from flask import Flask, request, abort
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
-from linebot.models import (MessageEvent, TextMessage, TextSendMessage,
-                            TemplateSendMessage, ImageSendMessage,
-                            AudioMessage, ButtonsTemplate,
-                            MessageTemplateAction, PostbackEvent,
-                            PostbackTemplateAction)
+from linebot.models import (
+  MessageEvent, TextMessage, TextSendMessage, TemplateSendMessage,
+  ImageSendMessage, AudioMessage, ButtonsTemplate, MessageTemplateAction,
+  PostbackEvent, PostbackTemplateAction, MessageAction, CarouselTemplate,
+  CarouselColumn, PostbackAction, URIAction)
 
 import os
 import uuid
 import re
 import random
-import json
+import json #json
+import datetime #轉換時間戳記
+import codecs #ASCII
 
 from src.models import OpenAIModel
 from src.memory import Memory
@@ -22,14 +24,20 @@ from src.utils import get_role_and_content
 
 load_dotenv('.env')
 
+# 讀入總題庫
 with open("Questions.json", encoding='utf8') as file:
   content = file.read()
   questions_dic = json.loads(content)
+# 讀入總題庫
 
 app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET'))
 storage = Storage('db.json')
+
+# 新增 SYSTEM_MESSAGE
+SM = 'You are an elementary school teacher.Answer in a way that elementary school students can understand.Answers should be short and precise.Unless it is a question that should be answered in English, it should be answered in Traditional Chinese.Give the best answer and avoid answers that may be wrong.Responses should be consistent and coherent.1公頃等於100公畝。40%off是打六折的意思。'
+# 新增 SYSTEM_MESSAGE
 
 memory = Memory(system_message=os.getenv('SYSTEM_MESSAGE'),
                 memory_message_count=2)
@@ -52,72 +60,100 @@ def callback():
   return 'OK'
 
 
-aa = [1, 2, 3, 4, 5]
-
-
+# 每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
+  
+  #抓時間
+  timestamp = event.timestamp # 獲取當前時間的時間戳記
+  timestamp_seconds = timestamp / 1000# 將毫秒轉換為秒
+  dt = datetime.datetime.fromtimestamp(timestamp_seconds)# 將時間戳記轉換為datetime物件
+  time = dt.strftime("%Y-%m-%d %H:%M:%S")# 將datetime物件轉換為指定格式的字串
+  #抓時間
 
-  global ran_q, aaa
+  global ran_q, actions
   msg = []
   actions = []
+  numsQ = [1,2,3,4,5]   # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
+  ran_numsQ = random.choice(numsQ)
+  ran_q = questions_dic["q" + str(ran_numsQ)]
+  
+  #增加SYSTEM_MESSAGE
+  #QtoSM=None
+  QtoSM = ran_q
+  memory.change_system_message(user_id, QtoSM + SM)
+  #增加SYSTEM_MESSAGE
+
+  # 定義 存入學生回應訊息(ID、時間、訊息)
+  def stuResp(user_id, time, text, sys):
+      with open(f"sturesp/allresp/{user_id}.json", mode="a+", encoding="utf8") as resp:
+          tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
+          json.dump(tg_text, resp, ensure_ascii=False, indent=0)
+  # 定義 存入學生回應訊息(ID、時間、訊息)
+  
+  # 答對的題庫 若還沒有就可在此先創建
+  with open(f"sturesp/okQ/{user_id}.json", mode="a+", encoding="utf8") as Q:
+      okQ = Q.read()
+  # 答對的題庫
+  
+  #存個人發送的訊息
+  stuResp(user_id, time, text, "")
+  #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    if len(aa) == 0:  # 若所有題目都回答正確
-      msg = TextSendMessage(text="你已經完成所有題目囉！")
+    if len(okQ) == len(questions_dic):  # 若所有題目都回答正確
+      msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
     else:
-      aaa = random.choice(aa)
-      ran_q = questions_dic["q" + str(aaa)]
-
       for option in ['A', 'B', 'C', 'D']:
         action = PostbackTemplateAction(
           label=f"({option}) {ran_q['options'][option]}",
           text=f"({option}) {ran_q['options'][option]}",
           data=f"{option}&{ran_q['options'][option]}")
         actions.append(action)
-      template = ButtonsTemplate(title='題目' + str(aaa),
+      template = ButtonsTemplate(title='題目',
                                  text=ran_q['q'],
                                  actions=actions)
       message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
                                     '\n選項：' + str(ran_q['options']),
                                     template=template)
-
-      jasondothis = TextSendMessage(text=ran_q['q'])
       msg.append(message)
-      msg.append(jasondothis)
+      stuResp(user_id, time, f"題目：{ran_q['q']}\n選項：{str(ran_q['options'])}", "(系統)")
 
 
 #調用答案
+
+  # 未加完 stuResp(user_id, time, ran_q, "")
+  
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      aa.remove(aaa)
+      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
+      stuResp(user_id, time, ran_q, "")
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'B' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      aa.remove(aaa)
+      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
+      stuResp(user_id, time, ran_q, "")
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'C' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      aa.remove(aaa)  # 從題目列表中移除已回答的題目
+      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
+      stuResp(user_id, time, ran_q, "")
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'D' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      aa.remove(aaa)
+      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
+      stuResp(user_id, time, ran_q, "")
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
       #調用答案
 
@@ -139,22 +175,29 @@ def handle_text_message(event):
         msg = TextSendMessage(text='Token 有效，註冊成功')
 
       elif text.startswith('「說明」'):
-        msg = TextSendMessage(text="""
-              「說明」
-              👉 呼叫使用說明
-              
-              「清除」
-              👉 當前每一次都會紀錄最後兩筆歷史紀錄，這個指令能夠清除歷史訊息
-              
-              「圖像」 + Prompt
-              👉 會調用 DALL∙E 2 Model，以文字生成圖像(但是需要使用英文)。
-                  例如：「圖像 flying pigs
-              
-              語音輸入
-              👉 會調用 Whisper 模型，先將語音轉換成文字，再調用 ChatGPT 以文字回覆
-              
-              其他文字輸入
-              👉 調用 ChatGPT 以文字回覆""")
+        msg = TextSendMessage(text="""你好!我是「賴」學習!
+我是一個機器人，
+我會盡力回答你問我的任何問題，但回答需要一點時間，我一次只能回答一個問題喔~
+
+回家作業是以一次一題的方式進行，
+❗按了之後就會直接送出並記錄分數且不能修改喔❗
+但就算答錯了也別灰心，看看解答，多多學習。
+
+當你準備好之後再開始下一題吧!
+
+⬇下面是使用說明⬇
+圖文選單
+👉點擊圖片以觸發功能
+👉👉「說明」:呼叫使用說明
+👉👉「影片」:呼叫單元學習影片
+👉👉「題目」:呼叫回家作業
+
+輸入文字
+👉向機器人問問題""")
+        #存系統發送的訊息
+        stuResp(user_id, time, "說明", "(系統)")
+        print('(系統:','說明',')')
+        #存系統發送的訊息
 
       elif text.startswith('「系統訊息」'):
         memory.change_system_message(user_id, text[5:].strip())
@@ -165,7 +208,6 @@ def handle_text_message(event):
         msg = TextSendMessage(text='歷史訊息清除成功')
 
       elif text.startswith('「圖像」'):
-
         #強制註冊
         #api_key = text[3:].strip()
         api_key = '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'
@@ -189,6 +231,38 @@ def handle_text_message(event):
         url = response['data'][0]['url']
         msg = ImageSendMessage(original_content_url=url, preview_image_url=url)
         memory.append(user_id, 'assistant', url)
+
+      elif text.startswith('「影片」'):
+        msg = TemplateSendMessage(
+          #text="""還沒有資源喔~\nhttps://youtu.be/MIR5zIpWBH0""")
+          alt_text='CarouselTemplate',
+          template=CarouselTemplate(columns=[
+            CarouselColumn(
+              thumbnail_image_url=
+              'https://steam.oxxostudio.tw/download/python/line-template-message-demo.jpg',
+              title='選單 1',
+              text='說明文字 1',
+              actions=[
+                MessageAction(label='hello', text='hello'),
+                URIAction(label='oxxo.studio', uri='http://oxxo.studio')
+              ]),
+            CarouselColumn(
+              thumbnail_image_url=
+              'https://steam.oxxostudio.tw/download/python/line-template-message-demo2.jpg',
+              title='選單 2',
+              text='說明文字 2',
+              actions=[
+                MessageAction(label='hi', text='hi'),
+                URIAction(label='STEAM 教育學習網', uri='https://steam.oxxostudio.tw')
+              ])
+          ]))
+        
+        #存系統發送的訊息
+        stuResp(user_id, time, "影片", "(系統)")
+        print('(系統:','影片',')')
+        #存系統發送的訊息
+
+      
       #判斷指令
       elif text.startswith('「'):
         msg = TextSendMessage(text='請輸入正確指令')
@@ -222,6 +296,12 @@ def handle_text_message(event):
         #print (msg.decode('unicode_escape'))
         #test
         memory.append(user_id, role, response)
+
+        #存GPT-4發送的訊息
+        stuResp(user_id, time, response, "(GPT-4)")
+        print('(GPT-4:',response,')')
+        #存GPT-4發送的訊息
+    
       #呼叫OpenAI
 
     #msg訊息格式錯誤回傳
@@ -240,6 +320,7 @@ def handle_text_message(event):
 
   #送出給LINE
   line_bot_api.reply_message(event.reply_token, msg)
+  #送出給LINE
 
   # 讀取bib檔，並將每一行轉換成一個字串
   with open('logs', 'r') as f:
@@ -258,7 +339,6 @@ def handle_text_message(event):
   for d in data:
     print('uID:', d[0], 'msg:', d[1])
 
-  #送出給LINE
 
 
 @handler.add(MessageEvent, message=AudioMessage)
