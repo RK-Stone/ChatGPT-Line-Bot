@@ -129,10 +129,7 @@ def handle_text_message(event):
       stuResp(user_id, time, f"題目：{ran_q['q']}\n選項：{str(ran_q['options'])}", "(系統)")
 
 
-#調用答案
-
-  # 未加 stuResp(user_id, time, "影片", "(系統)")
-  
+  #調用答案
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
@@ -143,7 +140,7 @@ def handle_text_message(event):
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'B' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      okQ("a", user_id, time, ran_numsQ))
+      okQ("a", user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
@@ -160,8 +157,7 @@ def handle_text_message(event):
       okQ("a", user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
-
-      #調用答案
+  #調用答案
 
   else:
     #判讀文字前綴
