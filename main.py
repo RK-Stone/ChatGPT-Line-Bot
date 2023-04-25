@@ -300,7 +300,8 @@ def handle_audio_message(event):
 
 @app.route("/", methods=['GET'])
 def index():
-  with open(os.path.join('template/index.html'), 'r',
+  with open(os.path.join('gptLBproj/gptLBproj/templates/index.html'),
+            'r',
             encoding='utf-8') as index:
     html_index = index.read()
   return (html_index)
@@ -308,7 +309,8 @@ def index():
 
 @app.route("/stuall/", methods=['GET'])
 def stuall():
-  with open(os.path.join('template/stuall.html'), 'r',
+  with open(os.path.join('gptLBproj/gptLBproj/templates/stuall.html'),
+            'r',
             encoding='utf-8') as stuall:
     html_stuall = stuall.read()
   return (html_stuall)
@@ -316,7 +318,8 @@ def stuall():
 
 @app.route("/stuone/", methods=['GET'])
 def stuone():
-  with open(os.path.join('template/stuone.html'), 'r',
+  with open(os.path.join('gptLBproj/gptLBproj/templates/stuone.html'),
+            'r',
             encoding='utf-8') as stuone:
     html_stuone = stuone.read()
   return (html_stuone)
@@ -324,7 +327,8 @@ def stuone():
 
 @app.route("/contact/", methods=['GET'])
 def contact():
-  with open(os.path.join('template/contact.html'), 'r',
+  with open(os.path.join('gptLBproj/gptLBproj/templates/contact.html'),
+            'r',
             encoding='utf-8') as contact:
     html_contact = contact.read()
   return (html_contact)
