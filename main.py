@@ -95,10 +95,16 @@ def handle_text_message(event):
   # 定義 存入學生回應訊息(ID、時間、訊息)
   
   # 答對的題庫 若還沒有就可在此先創建
-  with open(f"sturesp/okQ/{user_id}.json", mode="a+", encoding="utf8") as Q:
-      okQ = Q.read()
+  def okQ(mode, user_id, time, okQnum):
+    with open(f"sturesp/okQ/{user_id}.json", mode="a+", encoding="utf8") as Q:
+      if mode=="r":
+        okQ_r = Q.read()
+      elif mode=="a":
+        tg_text = {"ID": user_id, "時間": time, "題號": "q"+str(okQnum)}
+        okQ_w = Q.write(tg_text)
   # 答對的題庫
-  
+  okQ("r")
+
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
@@ -125,33 +131,33 @@ def handle_text_message(event):
 
 #調用答案
 
-  # 未加完 stuResp(user_id, time, ran_q, "")
+  # 未加 stuResp(user_id, time, "影片", "(系統)")
   
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      stuResp(user_id, time, ran_q, "")
+      okQ("a", user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'B' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      stuResp(user_id, time, ran_q, "")
+      okQ("a", user_id, time, ran_numsQ))
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'C' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      stuResp(user_id, time, ran_q, "")
+      okQ("a", user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
   elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'D' == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      stuResp(user_id, time, ran_q, "")
+      okQ("a", user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
 
