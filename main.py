@@ -12,9 +12,9 @@ import os
 import uuid
 import re
 import random
-import json #json
-import datetime #轉換時間戳記
-import codecs #ASCII
+import json  #json
+import datetime  #轉換時間戳記
+import codecs  #ASCII
 
 from src.models import OpenAIModel
 from src.memory import Memory
@@ -66,44 +66,47 @@ def handle_text_message(event):
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
-  
+
   #抓時間
-  timestamp = event.timestamp # 獲取當前時間的時間戳記
-  timestamp_seconds = timestamp / 1000# 將毫秒轉換為秒
-  dt = datetime.datetime.fromtimestamp(timestamp_seconds)# 將時間戳記轉換為datetime物件
-  time = dt.strftime("%Y-%m-%d %H:%M:%S")# 將datetime物件轉換為指定格式的字串
+  timestamp = event.timestamp  # 獲取當前時間的時間戳記
+  timestamp_seconds = timestamp / 1000  # 將毫秒轉換為秒
+  dt = datetime.datetime.fromtimestamp(timestamp_seconds)  # 將時間戳記轉換為datetime物件
+  time = dt.strftime("%Y-%m-%d %H:%M:%S")  # 將datetime物件轉換為指定格式的字串
   #抓時間
 
   global ran_q, actions
   msg = []
   actions = []
-  numsQ = [1,2,3,4,5]   # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
+  numsQ = [1, 2, 3, 4, 5]  # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
   ran_numsQ = random.choice(numsQ)
   ran_q = questions_dic["q" + str(ran_numsQ)]
-  
+
   #增加SYSTEM_MESSAGE
   #QtoSM=None
   QtoSM = ran_q
   memory.change_system_message(user_id, QtoSM + SM)
+
   #增加SYSTEM_MESSAGE
 
   # 定義 存入學生回應訊息(ID、時間、訊息)
   def stuResp(user_id, time, text, sys):
-      with open(f"sturesp/allresp/{user_id}.json", mode="a+", encoding="utf8") as resp:
-          tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
-          json.dump(tg_text, resp, ensure_ascii=False, indent=0)
+    with open(f"sturesp/allresp/{user_id}.json", mode="a+",
+              encoding="utf8") as resp:
+      tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
+      json.dump(tg_text, resp, ensure_ascii=False, indent=0)
+
   # 定義 存入學生回應訊息(ID、時間、訊息)
-  
+
   # 答對的題庫 若還沒有就可在此先創建
-  def okQ(mode, user_id, time, okQnum):
+  with open(f"sturesp/okQ/{user_id}.json", mode="r", encoding="utf8") as Q:
+    Q.read()
+  # 定義 答對的題庫
+  def okQ(user_id, time, okQnum):
     with open(f"sturesp/okQ/{user_id}.json", mode="a+", encoding="utf8") as Q:
-      if mode=="r":
-        okQ_r = Q.read()
-      elif mode=="a":
-        tg_text = {"ID": user_id, "時間": time, "題號": "q"+str(okQnum)}
-        okQ_w = Q.write(tg_text)
+      tg_text = {"ID": user_id, "時間": time, "題號": "q" + str(okQnum)}
+      Q.write(tg_text)
+
   # 答對的題庫
-  okQ("r")
 
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
@@ -119,44 +122,50 @@ def handle_text_message(event):
           text=f"({option}) {ran_q['options'][option]}",
           data=f"{option}&{ran_q['options'][option]}")
         actions.append(action)
-      template = ButtonsTemplate(title='題目',
-                                 text=ran_q['q'],
-                                 actions=actions)
+      template = ButtonsTemplate(title='題目', text=ran_q['q'], actions=actions)
       message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
                                     '\n選項：' + str(ran_q['options']),
                                     template=template)
       msg.append(message)
-      stuResp(user_id, time, f"題目：{ran_q['q']}\n選項：{str(ran_q['options'])}", "(系統)")
-
+      stuResp(user_id, time, f"題目：{ran_q['q']}\n選項：{str(ran_q['options'])}",
+              "(系統)")
 
   #調用答案
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      okQ("a", user_id, time, ran_numsQ)
+      msg = TextSendMessage(text="答對了！")
+      stuResp(user_id, time, "答對了！", "(系統)")
+      okQ(user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
+      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
 
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'B' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      okQ("a", user_id, time, ran_numsQ)
+      msg = TextSendMessage(text="答對了！")
+      stuResp(user_id, time, "答對了！", "(系統)")
+      okQ(user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
+      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
 
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'C' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      okQ("a", user_id, time, ran_numsQ)
+      msg = TextSendMessage(text="答對了！")
+      stuResp(user_id, time, "答對了！", "(系統)")
+      okQ(user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
+      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
 
   elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'D' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['tip']))
-      okQ("a", user_id, time, ran_numsQ)
+      msg = TextSendMessage(text="答對了！")
+      stuResp(user_id, time, "答對了！", "(系統)")
+      okQ(user_id, time, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
+      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
   #調用答案
 
   else:
@@ -198,7 +207,7 @@ def handle_text_message(event):
 👉向機器人問問題""")
         #存系統發送的訊息
         stuResp(user_id, time, "說明", "(系統)")
-        print('(系統:','說明',')')
+        print('(系統:', '說明', ')')
         #存系統發送的訊息
 
       elif text.startswith('「系統訊息」'):
@@ -255,16 +264,16 @@ def handle_text_message(event):
               text='說明文字 2',
               actions=[
                 MessageAction(label='hi', text='hi'),
-                URIAction(label='STEAM 教育學習網', uri='https://steam.oxxostudio.tw')
+                URIAction(label='STEAM 教育學習網',
+                          uri='https://steam.oxxostudio.tw')
               ])
           ]))
-        
+
         #存系統發送的訊息
         stuResp(user_id, time, "影片", "(系統)")
-        print('(系統:','影片',')')
+        print('(系統:', '影片', ')')
         #存系統發送的訊息
 
-      
       #判斷指令
       elif text.startswith('「'):
         msg = TextSendMessage(text='請輸入正確指令')
@@ -301,9 +310,9 @@ def handle_text_message(event):
 
         #存GPT-4發送的訊息
         stuResp(user_id, time, response, "(GPT-4)")
-        print('(GPT-4:',response,')')
+        print('(GPT-4:', response, ')')
         #存GPT-4發送的訊息
-    
+
       #呼叫OpenAI
 
     #msg訊息格式錯誤回傳
@@ -340,7 +349,6 @@ def handle_text_message(event):
   # 顯示提取出的結果
   for d in data:
     print('uID:', d[0], 'msg:', d[1])
-
 
 
 @handler.add(MessageEvent, message=AudioMessage)
