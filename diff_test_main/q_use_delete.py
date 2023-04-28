@@ -48,50 +48,38 @@ def handle_text_message(event):
       message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
                                     '\n選項：' + str(ran_q['options']),
                                     template=template)
-
-      jasondothis = TextSendMessage(text=ran_q['q'])
       msg.append(message)
-      msg.append(jasondothis)
 
 
-#調用答案
-#調用答案
-  elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'A' == ran_q['a']:
+  def judgeAns(Ans):
+    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+      okQ_dic = Q.read()
+    with open(file_name, 'r', encoding='utf-8') as f:
+      my_list = json.load(f)
+    for idx, obj in enumerate(my_list):
+        if obj['id'] == 2:
+            my_list.pop(idx)
+    if Ans == ran_q['a']:
       msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      for i, q in enumerate(questions):
-        if q == ran_q:
-          del questions[q]  # 從題目列表中移除已回答的題目
-          break
+      stuResp(user_id, time, "答對了！", "(系統)")
       aa.remove(aaa)
+    with open(new_file_name, 'w', encoding='utf-8') as f:
+      f.write(json.dumps(my_list, indent=2))
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
+      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
+    return (msg)
 
-  elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'B' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      for i, q in enumerate(questions):
-        if q == ran_q:
-          del questions[q]  # 從題目列表中移除已回答的題目
-          break
-      aa.remove(aaa)
-    else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+  #調用答案
+  elif text.startswith('(A) '):
+    judgeAns('A')
 
-  elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'C' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      if ran_q in questions:
-        questions.remove(ran_q)  # 從題目列表中移除已回答的題目
-      aa.remove(aaa)  # 從題目列表中移除已回答的題目
-    else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+  elif text.startswith('(B) '):
+    judgeAns('B')
 
-  elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'D' == ran_q['a']:
-      msg = TextSendMessage(text="答對了！" + str(ran_q['explain']))
-      if ran_q in questions:
-        questions.remove(ran_q)  # 從題目列表中移除已回答的題目
-      aa.remove(aaa)
-    else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['explain']))
+  elif text.startswith('(C) '):
+    judgeAns('C')
+
+  elif text.startswith('(D) '):
+    judgeAns('D')
+  #調用答案
