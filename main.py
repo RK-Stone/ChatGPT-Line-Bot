@@ -7,6 +7,7 @@ from linebot.models import (
   ImageSendMessage, AudioMessage, ButtonsTemplate, MessageTemplateAction,
   PostbackEvent, PostbackTemplateAction, MessageAction, CarouselTemplate,
   CarouselColumn, PostbackAction, URIAction)
+from IPython.display import display, HTML
 
 import os
 import uuid
@@ -15,6 +16,7 @@ import random
 import json  #json
 import datetime  #轉換時間戳記
 import codecs  #ASCII
+import pandas as pd
 
 from src.models import OpenAIModel
 from src.memory import Memory
@@ -42,7 +44,9 @@ SM = 'You are an elementary school teacher.Answer in a way that elementary schoo
 memory = Memory(system_message=os.getenv('SYSTEM_MESSAGE'),
                 memory_message_count=2)
 model_management = {}
+
 api_keys = {}
+api_key = 'your api keys'  #直接在這裡改
 
 
 @app.route("/callback", methods=['POST'])
@@ -66,6 +70,8 @@ def handle_text_message(event):
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
+  global api_keys, api_key
+  api_keys[user_id] = api_key  #直接註冊
 
   #抓時間
   timestamp = event.timestamp  # 獲取當前時間的時間戳記
@@ -74,37 +80,28 @@ def handle_text_message(event):
   time = dt.strftime("%Y-%m-%d %H:%M:%S")  # 將datetime物件轉換為指定格式的字串
   #抓時間
 
-  global ran_q, actions
+  global ran_q, count
   msg = []
   actions = []
-  numsQ = [1, 2, 3, 4, 5]  # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
-  ran_numsQ = random.choice(numsQ)
-  ran_q = questions_dic["q" + str(ran_numsQ)]
 
-  #增加SYSTEM_MESSAGE
-  #QtoSM=None
-  QtoSM = ran_q
-  memory.change_system_message(user_id, QtoSM + SM)
-
-  #增加SYSTEM_MESSAGE
-
-  # 定義 存入學生回應訊息(ID、時間、訊息)
+  # 定義存入學生回應訊息(ID、時間、訊息)
   def stuResp(user_id, time, text, sys):
-    with open(f"sturesp/allresp/{user_id}.json", mode="a+",
+    os.makedirs("sturesp/allresp", exist_ok=True)
+    with open(f"sturesp/allresp/{user_id}.txt", mode="a+",
               encoding="utf8") as resp:
       tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
-      json.dump(tg_text, resp, ensure_ascii=False, indent=0)
+      resp.write(str(tg_text) + '\n')
 
   # 定義 存入學生回應訊息(ID、時間、訊息)
 
   # 答對的題庫 若還沒有就可在此先創建
-  with open(f"sturesp/okQ/{user_id}.json", mode="r", encoding="utf8") as Q:
-    Q.read()
+  with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+    okQ_dic = Q.read()
   # 定義 答對的題庫
-  def okQ(user_id, time, okQnum):
-    with open(f"sturesp/okQ/{user_id}.json", mode="a+", encoding="utf8") as Q:
-      tg_text = {"ID": user_id, "時間": time, "題號": "q" + str(okQnum)}
-      Q.write(tg_text)
+  def okQ(user_id, okQnum):
+    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+      tg_text = "q" + str(okQnum)
+      Q.write(tg_text + '\n')
 
   # 答對的題庫
 
@@ -113,9 +110,22 @@ def handle_text_message(event):
   #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    if len(okQ) == len(questions_dic):  # 若所有題目都回答正確
+    global ran_q, numsQ, ran_numsQ, count
+    numsQ = [1, 2, 3, 4, 5]  # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
+    ran_numsQ = random.choice(numsQ)
+    ran_q = questions_dic["q" + str(ran_numsQ)]
+    #增加SYSTEM_MESSAGE
+    #QtoSM=None
+    QtoSM = '當前題目' + ran_q['q']
+    memory.change_system_message(user_id, QtoSM + SM)
+    #增加SYSTEM_MESSAGE
+
+    for i, q in enumerate(okQ_dic):
+      count+=1
+
+    if count == len(questions_dic):  # 若所有題目都回答正確
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
-    else:
+    elif count == 0:
       for option in ['A', 'B', 'C', 'D']:
         action = PostbackTemplateAction(
           label=f"({option}) {ran_q['options'][option]}",
@@ -127,15 +137,38 @@ def handle_text_message(event):
                                     '\n選項：' + str(ran_q['options']),
                                     template=template)
       msg.append(message)
-      stuResp(user_id, time, f"題目：{ran_q['q']}\n選項：{str(ran_q['options'])}",
+      stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
               "(系統)")
+    else:  # 若所有題目都回答正確
+      with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+        stu_Q = Q.read()
+      for i, q in enumerate(stu_Q):
+        if q == ran_q:  # 題目已在做對題庫中
+          continue
+        else:
+          for option in ['A', 'B', 'C', 'D']:
+            action = PostbackTemplateAction(
+              label=f"({option}) {ran_q['options'][option]}",
+              text=f"({option}) {ran_q['options'][option]}",
+              data=f"{option}&{ran_q['options'][option]}")
+            actions.append(action)
+          template = ButtonsTemplate(title='題目111',
+                                     text=ran_q['q'],
+                                     actions=actions)
+          message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
+                                        '\n選項：' + str(ran_q['options']),
+                                        template=template)
+          msg.append(message)
+          stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
+                  "(系統)")
+          break
 
   #調用答案
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      okQ(user_id, time, ran_numsQ)
+      okQ(user_id, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
       stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
@@ -144,7 +177,7 @@ def handle_text_message(event):
     if 'B' == ran_q['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      okQ(user_id, time, ran_numsQ)
+      okQ(user_id, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
       stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
@@ -153,7 +186,7 @@ def handle_text_message(event):
     if 'C' == ran_q['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      okQ(user_id, time, ran_numsQ)
+      okQ(user_id, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
       stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
@@ -162,7 +195,7 @@ def handle_text_message(event):
     if 'D' == ran_q['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      okQ(user_id, time, ran_numsQ)
+      okQ(user_id, ran_numsQ)
     else:
       msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
       stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
@@ -174,7 +207,7 @@ def handle_text_message(event):
       if text.startswith('「註冊」'):
         #強制正確
         #api_key = text[3:].strip()
-        api_key = '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'
+        api_key = 'your api keys'
         #強制正確
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
@@ -221,7 +254,7 @@ def handle_text_message(event):
       elif text.startswith('「圖像」'):
         #強制註冊
         #api_key = text[3:].strip()
-        api_key = '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'
+        api_key = 'your api keys'
         #強制正確
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
@@ -283,7 +316,7 @@ def handle_text_message(event):
       else:
         #強制註冊
         #api_key = text[3:].strip()
-        api_key = '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'
+        api_key = 'your api keys'
         #強制正確
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
@@ -333,22 +366,57 @@ def handle_text_message(event):
   line_bot_api.reply_message(event.reply_token, msg)
   #送出給LINE
 
-  # 讀取bib檔，並將每一行轉換成一個字串
-  with open('logs', 'r') as f:
-    lines = f.readlines()
+  # 檢查檔案是否存在，如果存在就讀取之前的資料，否則建立一個新的檔案
+  if os.path.isfile('sturecord.html'):
+    with open('sturecord.html', 'r', encoding='utf-8') as f:
+      previous_data = f.readlines()
+      # 只保留前54行的內容
+      previous_data = previous_data[:54]
+  else:
+    previous_data = []
 
-  # 使用正則表達式來提取uID和msg
-  pattern = re.compile(r'->\s(U[^\s]+):\s(.+)')
-  data = []
-  for line in lines:
-    match = pattern.search(line)
-    if match:
-      uID, msg = match.group(1), match.group(2)
-      data.append((uID, msg))
+  # 取得路徑下所有的txt檔案
+  txt_files = [f for f in os.listdir('sturesp/allresp') if f.endswith('.txt')]
 
-  # 顯示提取出的結果
-  for d in data:
-    print('uID:', d[0], 'msg:', d[1])
+  # 創建一個 dictionary 來儲存每個使用者最新的 DataFrame
+  user_tables = {}
+
+  # 逐一讀取每個txt檔案，整理成DataFrame，並存儲在 user_tables 中
+  for txt_file in txt_files:
+    user_id = txt_file.split('.')[0]
+    with open(f'sturesp/allresp/{txt_file}', 'r') as f:
+      data = [eval(line) for line in f]
+
+    # 提取 ID、時間、訊息
+    rows = []
+    for item in data:
+      rows.append({'ID': item['ID'], '時間': item['時間'], '訊息': item['訊息']})
+
+    # 將資料轉換成 DataFrame
+    df = pd.DataFrame(rows)
+
+    # 如果使用者已經有表格，則將新的訊息更新至原表格，否則就新增一個新表格
+    if user_id in user_tables:
+      # 找出更新後的資料
+      updated_df = df[df['時間'] > user_tables[user_id]['時間'].max()]
+      if not updated_df.empty:
+        # 將更新後的表格與原本的表格合併
+        user_tables[user_id] = pd.concat([user_tables[user_id], updated_df])
+    else:
+      user_tables[user_id] = df
+
+  # 將每個使用者的 DataFrame 轉換成 HTML 表格，並連接起來
+  html_tables = []
+  for user_id, df in user_tables.items():
+    html_tables.append(f"<h2>{user_id}</h2>" + df.to_html(index=False))
+
+  all_html_tables = '<br>'.join(html_tables)
+
+  # 在 sturecord.html 檔案的末尾繼續添加 HTML 表格
+  with open('sturecord.html', 'w', encoding='utf-8') as f:
+    # 將表格包裝在一個<div>元素中，加上padding-left樣式屬性讓表格向右移
+    html = f"<div style='text-align:center; padding-left: 50px;'>{all_html_tables}</div>"
+    f.write(''.join(previous_data) + html)
 
 
 @handler.add(MessageEvent, message=AudioMessage)
@@ -390,38 +458,38 @@ def handle_audio_message(event):
 
 @app.route("/", methods=['GET'])
 def index():
-  with open(os.path.join('gptLBproj/gptLBproj/templates/index.html'),
-            'r',
-            encoding='utf-8') as index:
+  with open(os.path.join('index.html'), 'r', encoding='utf-8') as index:
     html_index = index.read()
   return (html_index)
 
 
 @app.route("/stuall/", methods=['GET'])
 def stuall():
-  with open(os.path.join('gptLBproj/gptLBproj/templates/stuall.html'),
-            'r',
-            encoding='utf-8') as stuall:
+  with open(os.path.join('stuall.html'), 'r', encoding='utf-8') as stuall:
     html_stuall = stuall.read()
   return (html_stuall)
 
 
 @app.route("/stuone/", methods=['GET'])
 def stuone():
-  with open(os.path.join('gptLBproj/gptLBproj/templates/stuone.html'),
-            'r',
-            encoding='utf-8') as stuone:
+  with open(os.path.join('stuone.html'), 'r', encoding='utf-8') as stuone:
     html_stuone = stuone.read()
   return (html_stuone)
 
 
 @app.route("/contact/", methods=['GET'])
 def contact():
-  with open(os.path.join('gptLBproj/gptLBproj/templates/contact.html'),
-            'r',
-            encoding='utf-8') as contact:
+  with open(os.path.join('contact.html'), 'r', encoding='utf-8') as contact:
     html_contact = contact.read()
   return (html_contact)
+
+
+@app.route("/sturecord/", methods=['GET'])
+def sturecord():
+  with open(os.path.join('sturecord.html'), 'r',
+            encoding='utf-8') as sturecord:
+    html_sturecord = sturecord.read()
+  return (html_sturecord)
 
 
 if __name__ == "__main__":
