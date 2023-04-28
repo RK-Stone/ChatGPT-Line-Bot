@@ -96,7 +96,8 @@ def handle_text_message(event):
 
   # 答對的題庫 若還沒有就可在此先創建
   with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
-    okQ_dic = Q.read()
+    Q.read()
+
   # 定義 答對的題庫
   def okQ(user_id, okQnum):
     with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
@@ -105,13 +106,20 @@ def handle_text_message(event):
 
   # 答對的題庫
 
+  with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
+    count = 0
+    for line in f:
+      count += 1
+
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    global ran_q, numsQ, ran_numsQ, count
-    numsQ = [1, 2, 3, 4, 5]  # if題目數量不同 這邊要改？試 ranint(len(questions_dic))
+    global ran_q, numsQ, ran_numsQ
+    numsQ = []
+    for i in range(len(questions_dic)):
+      numsQ.append(i + 1)
     ran_numsQ = random.choice(numsQ)
     ran_q = questions_dic["q" + str(ran_numsQ)]
     #增加SYSTEM_MESSAGE
@@ -119,9 +127,6 @@ def handle_text_message(event):
     QtoSM = '當前題目' + ran_q['q']
     memory.change_system_message(user_id, QtoSM + SM)
     #增加SYSTEM_MESSAGE
-
-    for i, q in enumerate(okQ_dic):
-      count+=1
 
     if count == len(questions_dic):  # 若所有題目都回答正確
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
@@ -132,7 +137,9 @@ def handle_text_message(event):
           text=f"({option}) {ran_q['options'][option]}",
           data=f"{option}&{ran_q['options'][option]}")
         actions.append(action)
-      template = ButtonsTemplate(title='題目', text=ran_q['q'], actions=actions)
+      template = ButtonsTemplate(title=f"{count}",
+                                 text=ran_q['q'],
+                                 actions=actions)
       message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
                                     '\n選項：' + str(ran_q['options']),
                                     template=template)
@@ -140,28 +147,27 @@ def handle_text_message(event):
       stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
               "(系統)")
     else:  # 若所有題目都回答正確
-      with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
-        stu_Q = Q.read()
-      for i, q in enumerate(stu_Q):
-        if q == ran_q:  # 題目已在做對題庫中
-          continue
-        else:
-          for option in ['A', 'B', 'C', 'D']:
-            action = PostbackTemplateAction(
-              label=f"({option}) {ran_q['options'][option]}",
-              text=f"({option}) {ran_q['options'][option]}",
-              data=f"{option}&{ran_q['options'][option]}")
-            actions.append(action)
-          template = ButtonsTemplate(title='題目111',
-                                     text=ran_q['q'],
-                                     actions=actions)
-          message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
-                                        '\n選項：' + str(ran_q['options']),
-                                        template=template)
-          msg.append(message)
-          stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
-                  "(系統)")
-          break
+      with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
+        for q_num in f:
+          if q_num == ran_q:  # 題目已在做對題庫中
+            continue
+          else:
+            for option in ['A', 'B', 'C', 'D']:
+              action = PostbackTemplateAction(
+                label=f"({option}) {ran_q['options'][option]}",
+                text=f"({option}) {ran_q['options'][option]}",
+                data=f"{option}&{ran_q['options'][option]}")
+              actions.append(action)
+            template = ButtonsTemplate(title='題目111',
+                                       text=ran_q['q'],
+                                       actions=actions)
+            message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
+                                          '\n選項：' + str(ran_q['options']),
+                                          template=template)
+            msg.append(message)
+            stuResp(user_id, time,
+                    f"題目：{ran_q['q']}選項：{str(ran_q['options'])}", "(系統)")
+            break
 
   #調用答案
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
