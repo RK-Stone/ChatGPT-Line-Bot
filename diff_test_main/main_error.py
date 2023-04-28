@@ -133,7 +133,23 @@ def handle_text_message(event):
   if text.startswith('「題目」'):
     if len(okQ_dic) == len(questions_dic):  # 若所有題目都回答正確
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
-    elif len(okQ_dic) != len(questions_dic):  # 若所有題目都回答正確
+    elif len(okQ_dic) == 0:
+      for option in ['A', 'B', 'C', 'D']:
+            action = PostbackTemplateAction(
+              label=f"({option}) {ran_q['options'][option]}",
+              text=f"({option}) {ran_q['options'][option]}",
+              data=f"{option}&{ran_q['options'][option]}")
+            actions.append(action)
+       template = ButtonsTemplate(title='題目',
+                                     text=ran_q['q'],
+                                     actions=actions)
+       message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
+                                        '\n選項：' + str(ran_q['options']),
+                                        template=template)
+       msg.append(message)
+       stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
+                  "(系統)")
+    else:  # 若所有題目都回答正確
       with open(f"sturesp/okQ/{user_id}.json", mode="a+",
                 encoding="utf8") as f:  #讀取個人已完成題庫
         stu_Q = json.load(f)
