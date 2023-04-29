@@ -80,7 +80,7 @@ def handle_text_message(event):
   time = dt.strftime("%Y-%m-%d %H:%M:%S")  # 將datetime物件轉換為指定格式的字串
   #抓時間
 
-  global ran_q, count
+  global ran_q
   msg = []
   actions = []
 
@@ -106,17 +106,18 @@ def handle_text_message(event):
 
   # 答對的題庫
 
-  with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
-    count = 0
-    for line in f:
-      count += 1
-
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    global ran_q, numsQ, ran_numsQ
+    global ran_q, numsQ, ran_nums, count
+    with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
+      global count
+      count = 0
+      for line in f:
+        count += 1
+        
     numsQ = []
     for i in range(len(questions_dic)):
       numsQ.append(i + 1)
@@ -148,9 +149,10 @@ def handle_text_message(event):
               "(系統)")
     else:  # 若所有題目都回答正確
       with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
+        f.seek(0)
         for q_num in f:
           if q_num == ran_q:  # 題目已在做對題庫中
-            continue
+            message = TextSendMessage(text="！")
           else:
             for option in ['A', 'B', 'C', 'D']:
               action = PostbackTemplateAction(
@@ -167,8 +169,7 @@ def handle_text_message(event):
             msg.append(message)
             stuResp(user_id, time,
                     f"題目：{ran_q['q']}選項：{str(ran_q['options'])}", "(系統)")
-            break
-
+            
   #調用答案
   elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     if 'A' == ran_q['a']:
@@ -313,11 +314,7 @@ def handle_text_message(event):
         print('(系統:', '影片', ')')
         #存系統發送的訊息
 
-      #判斷指令
-      elif text.startswith('「'):
-        msg = TextSendMessage(text='請輸入正確指令')
-      #判斷指令
-
+      
       #呼叫OpenAI
       else:
         #強制註冊
@@ -367,11 +364,15 @@ def handle_text_message(event):
       else:
         msg = TextSendMessage(text=str(e))
     #msg訊息格式錯誤回傳
+  print(count)
 
+  
   #送出給LINE
-  line_bot_api.reply_message(event.reply_token, msg)
+  line_bot_api.reply_message(event.reply_token, msg) 
   #送出給LINE
 
+
+  
   # 檢查檔案是否存在，如果存在就讀取之前的資料，否則建立一個新的檔案
   if os.path.isfile('sturecord.html'):
     with open('sturecord.html', 'r', encoding='utf-8') as f:
@@ -459,6 +460,7 @@ def handle_audio_message(event):
     else:
       msg = TextSendMessage(text=str(e))
   os.remove(input_audio_path)
+  
   line_bot_api.reply_message(event.reply_token, msg)
 
 
