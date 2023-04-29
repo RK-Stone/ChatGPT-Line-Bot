@@ -27,9 +27,8 @@ from src.utils import get_role_and_content
 load_dotenv('.env')
 
 # 讀入總題庫
-with open("Questions.json", encoding='utf8') as file:
-  content = file.read()
-  questions_dic = json.loads(content)
+with open("Questions.json", encoding='utf8') as f:
+  questions_dic = json.loads(f.read())
 # 讀入總題庫
 
 app = Flask(__name__)
@@ -67,6 +66,7 @@ def callback():
 # 每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
+  print("00001")
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
@@ -106,12 +106,22 @@ def handle_text_message(event):
 
   # 答對的題庫
 
+  with open(f"sturesp/ranQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
+    f.write('')
+  
+  def ranQ(user_id, stu_ranQ):
+    with open(f"sturesp/ranQ/{user_id}.txt", mode="w", encoding='utf8') as f:
+      f.write(stu_ranQ + '\n')
+
+        
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    global ran_q, numsQ, ran_nums, count
+    print("00002")
+    global ran_q, numsQ, ran_numsQ, count
+    
     with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
       global count
       count = 0
@@ -120,92 +130,112 @@ def handle_text_message(event):
         
     numsQ = []
     for i in range(len(questions_dic)):
-      numsQ.append(i + 1)
-    ran_numsQ = random.choice(numsQ)
-    ran_q = questions_dic["q" + str(ran_numsQ)]
-    #增加SYSTEM_MESSAGE
-    #QtoSM=None
-    QtoSM = '當前題目' + ran_q['q']
-    memory.change_system_message(user_id, QtoSM + SM)
-    #增加SYSTEM_MESSAGE
+      numsQ.append(i + 1)   # 創抽取題號的list [1, 2, 3, .....]
 
+    ran_numsQ = random.choice(numsQ)   # 隨機抽題號
+    # ran_q_dic = questions_dic["q" + str(ran_numsQ)]
+    ranQ(user_id, "q" + str(ran_numsQ))
+    with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as f:
+      global get_ranQ
+      get_ranQ = f.read()
+      
+    get_ranQ_noN = get_ranQ[:-1]
+    global stu_nowq_dic
+    stu_nowq_dic = questions_dic[str(get_ranQ_noN)] 
+  
+    
     if count == len(questions_dic):  # 若所有題目都回答正確
+      print("00003")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
-    elif count == 0:
+    elif count == 0:  # 沒有題目回答正確 (回答正確的題目數=0)
+      print("00004")
       for option in ['A', 'B', 'C', 'D']:
         action = PostbackTemplateAction(
-          label=f"({option}) {ran_q['options'][option]}",
-          text=f"({option}) {ran_q['options'][option]}",
-          data=f"{option}&{ran_q['options'][option]}")
+          label=f"({option}) {stu_nowq_dic['options'][option]}",
+          text=f"({option}) {stu_nowq_dic['options'][option]}",
+          data=f"{option}&{stu_nowq_dic['options'][option]}")
         actions.append(action)
       template = ButtonsTemplate(title=f"{count}",
-                                 text=ran_q['q'],
+                                 text=stu_nowq_dic['q'],
                                  actions=actions)
-      message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
-                                    '\n選項：' + str(ran_q['options']),
+      message = TemplateSendMessage(alt_text='題目：' + str(stu_nowq_dic['q']) +
+                                    '\n選項：' + str(stu_nowq_dic['options']),
                                     template=template)
       msg.append(message)
-      stuResp(user_id, time, f"題目：{ran_q['q']}選項：{str(ran_q['options'])}",
+      stuResp(user_id, time, f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
               "(系統)")
-    else:  # 若所有題目都回答正確
-      with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
-        f.seek(0)
-        for q_num in f:
-          if q_num == ran_q:  # 題目已在做對題庫中
-            message = TextSendMessage(text="！")
+    else:  # 有題目沒答完
+      print("00005")
+      with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
+        print("00006")
+        while True:
+          if get_ranQ in f:
+            print("00007")
+            print(f"{get_ranQ}")
+            print(f.read())
+            ran_numsQ = random.choice(numsQ)   # 隨機抽題號
+            # ran_q_dic = questions_dic["q" + str(ran_numsQ)]
+            ranQ(user_id, "q" + str(ran_numsQ))
+            with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as ff:
+              get_ranQ = ff.read()
+            get_ranQ_noN = get_ranQ[:-1]
+            stu_nowq_dic = questions_dic[str(get_ranQ_noN)]
+            print(f"{get_ranQ}")
+            print(f.read())
           else:
-            for option in ['A', 'B', 'C', 'D']:
-              action = PostbackTemplateAction(
-                label=f"({option}) {ran_q['options'][option]}",
-                text=f"({option}) {ran_q['options'][option]}",
-                data=f"{option}&{ran_q['options'][option]}")
-              actions.append(action)
-            template = ButtonsTemplate(title='題目111',
-                                       text=ran_q['q'],
-                                       actions=actions)
-            message = TemplateSendMessage(alt_text='題目：' + str(ran_q['q']) +
-                                          '\n選項：' + str(ran_q['options']),
-                                          template=template)
-            msg.append(message)
-            stuResp(user_id, time,
-                    f"題目：{ran_q['q']}選項：{str(ran_q['options'])}", "(系統)")
-            
+            break
+        for option in ['A', 'B', 'C', 'D']:
+          action = PostbackTemplateAction(
+            label=f"({option}) {stu_nowq_dic['options'][option]}",
+            text=f"({option}) {stu_nowq_dic['options'][option]}",
+            data=f"{option}&{stu_nowq_dic['options'][option]}")
+          actions.append(action)
+        template = ButtonsTemplate(title=f'題目：{count}',
+                                   text=stu_nowq_dic['q'],
+                                   actions=actions)
+        message = TemplateSendMessage(alt_text='題目：' + str(stu_nowq_dic['q']) +
+                                      '\n選項：' + str(stu_nowq_dic['options']),
+                                      template=template)
+        msg.append(message)
+        stuResp(user_id, time,
+                f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}", "(系統)")
+          
   #調用答案
-  elif text.startswith('(A) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'A' == ran_q['a']:
+  elif text.startswith('(A) '):
+    if 'A' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       okQ(user_id, ran_numsQ)
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
-      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
+      msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
+      stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
 
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'B' == ran_q['a']:
+    if 'B' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       okQ(user_id, ran_numsQ)
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
-      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
+      msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
+      stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
 
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'C' == ran_q['a']:
+    if 'C' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       okQ(user_id, ran_numsQ)
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
-      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
+      msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
+      stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
 
   elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
-    if 'D' == ran_q['a']:
+    if 'D' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       okQ(user_id, ran_numsQ)
     else:
-      msg = TextSendMessage(text="答錯了！" + str(ran_q['tip']))
-      stuResp(user_id, time, f"答錯了！{str(ran_q['tip'])}", "(系統)")
+      msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
+      stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
   #調用答案
 
   else:
@@ -317,10 +347,12 @@ def handle_text_message(event):
       
       #呼叫OpenAI
       else:
-        #強制註冊
-        #api_key = text[3:].strip()
-        api_key = 'your api keys'
-        #強制正確
+        #增加SYSTEM_MESSAGE
+        #QtoSM=None
+        QtoSM = '當前題目' + stu_nowq_dic['q']
+        memory.change_system_message(user_id, QtoSM + SM)
+        #增加SYSTEM_MESSAGE
+        
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
         if not is_successful:
@@ -364,9 +396,10 @@ def handle_text_message(event):
       else:
         msg = TextSendMessage(text=str(e))
     #msg訊息格式錯誤回傳
-  print(count)
 
   
+  print(count)
+
   #送出給LINE
   line_bot_api.reply_message(event.reply_token, msg) 
   #送出給LINE
