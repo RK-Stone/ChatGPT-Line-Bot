@@ -119,7 +119,7 @@ def handle_text_message(event):
   #存個人發送的訊息
 
   if text.startswith('「題目」'):
-    print("00002")
+    #print("00002")
     global ran_q, numsQ, ran_numsQ, count
     
     with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
@@ -130,10 +130,10 @@ def handle_text_message(event):
         
     numsQ = []
     for i in range(len(questions_dic)):
-      numsQ.append(i + 1)   # 創抽取題號的list [1, 2, 3, .....]
+      numsQ.append(i + 1)   #創抽取題號的list [1, 2, 3, .....]
 
-    ran_numsQ = random.choice(numsQ)   # 隨機抽題號
-    # ran_q_dic = questions_dic["q" + str(ran_numsQ)]
+    ran_numsQ = random.choice(numsQ)   #隨機抽題號
+    #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
     ranQ(user_id, "q" + str(ran_numsQ))
     with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as f:
       global get_ranQ
@@ -144,11 +144,11 @@ def handle_text_message(event):
     stu_nowq_dic = questions_dic[str(get_ranQ_noN)] 
   
     
-    if count == len(questions_dic):  # 若所有題目都回答正確
-      print("00003")
+    if count == len(questions_dic):  #若所有題目都回答正確
+      #print("00003")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
-    elif count == 0:  # 沒有題目回答正確 (回答正確的題目數=0)
-      print("00004")
+    elif count == 0:  #沒有題目回答正確 (回答正確的題目數=0)
+      #print("00004")
       for option in ['A', 'B', 'C', 'D']:
         action = PostbackTemplateAction(
           label=f"({option}) {stu_nowq_dic['options'][option]}",
@@ -164,24 +164,29 @@ def handle_text_message(event):
       msg.append(message)
       stuResp(user_id, time, f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
               "(系統)")
-    else:  # 有題目沒答完
-      print("00005")
-      with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
-        print("00006")
+    else:  #有題目沒答完
+      #print("00005")
+      with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as globalFile:
+        #print("00006")
+        global globalglobalFile
+        globalglobalFile = []
+        for line in globalFile:
+          globalglobalFile.append(line)
         while True:
-          if get_ranQ in f:
+          print(globalglobalFile)
+          if get_ranQ in globalglobalFile:
             print("00007")
             print(f"{get_ranQ}")
-            print(f.read())
-            ran_numsQ = random.choice(numsQ)   # 隨機抽題號
-            # ran_q_dic = questions_dic["q" + str(ran_numsQ)]
+            print(globalglobalFile)
+            ran_numsQ = random.choice(numsQ)   #隨機抽題號
+            #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
             ranQ(user_id, "q" + str(ran_numsQ))
             with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as ff:
               get_ranQ = ff.read()
             get_ranQ_noN = get_ranQ[:-1]
             stu_nowq_dic = questions_dic[str(get_ranQ_noN)]
             print(f"{get_ranQ}")
-            print(f.read())
+            print(globalglobalFile)
           else:
             break
         for option in ['A', 'B', 'C', 'D']:
