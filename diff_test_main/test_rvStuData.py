@@ -26,12 +26,12 @@ json = {
 
 json = 
 {
-  "user_id" : {
-                "stu_okQnum" : ["q1", "q1", "q2"],
-                "stu_ranQ" : "q5",
-                "okQnum_list" : {"q1":2, "q2":1},   #dict(zip(*numpy.unique(stu_okQnum, return_counts=True)))
-                "count_okQ" : 2   #len(okQnum_list)
-              }
+  user_id : {
+              "stu_okQnum" : ["q1", "q1", "q2"],
+              "stu_ranQ" : "q5",
+              "okQnum_list" : ["q1", "q2"],   #numpy.unique(stu_okQnum)
+              "count_okQ" : 2   #len(okQnum_list)
+             }
 }
 
 #定義 確認學生總資料是否存在 不存在則建新檔 並設定預設空dic
