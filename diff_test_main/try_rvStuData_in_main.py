@@ -275,7 +275,7 @@ def handle_text_message(event):
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum))
+      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
@@ -300,7 +300,7 @@ def handle_text_message(event):
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum))
+      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
@@ -325,7 +325,7 @@ def handle_text_message(event):
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum))
+      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
@@ -350,7 +350,7 @@ def handle_text_message(event):
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum))
+      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
