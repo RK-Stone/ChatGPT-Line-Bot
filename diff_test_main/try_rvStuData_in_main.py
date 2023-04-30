@@ -114,7 +114,7 @@ def handle_text_message(event):
             "count_okQ": 0
           }
         }, exist_file)
-
+    exist_file.close()
   #確認學生總資料是否存在
 
   #定義 寫入新資料
@@ -139,6 +139,7 @@ def handle_text_message(event):
         rAllData[user_id]["count_okQ"] = count_okQ
       revise_new_allData = rAllData
       print("9997")
+    rv_allData_file.close()
     return revise_new_allData
 
   #定義 寫入新資料
@@ -160,6 +161,7 @@ def handle_text_message(event):
         get_new_allData["okQnum_list"] = rAllData[user_id]["okQnum_list"]
       if count_okQ != None:
         get_new_allData["count_okQ"] = rAllData[user_id]["count_okQ"]
+    get_allData_file.close()
     return get_new_allData
 
   #定義 抓取資料
@@ -172,6 +174,7 @@ def handle_text_message(event):
       print("9995")
       json.dump(new_allData, write_allData_file)
       print("9994")
+    write_allData_file.close()
 
   #定義 寫入更新資料
 
@@ -204,7 +207,8 @@ def handle_text_message(event):
                                              stu_ranQ=1)["stu_ranQ"]]  #抽對應題目
     #隨機抽題目
     print("11110")
-
+    print(type(get_allData(user_id, count_okQ=1)["count_okQ"]))
+    print(get_allData(user_id, count_okQ=1)["count_okQ"])
     if int(get_allData(
         user_id, count_okQ=1)["count_okQ"]) >= len(questions_dic):  #若所有題目都回答正確
       print("00003")
@@ -272,11 +276,15 @@ def handle_text_message(event):
                 stu_okQnum=json.dumps(
                   get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
       print("777inininin")
+      print(get_allData(user_id, stu_okQnum=1))
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
+      print(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
       print("77")
+      print(numpy.unique(new_stu_okQnum).tolist())
+      print(new_okQnum_list)
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
@@ -300,7 +308,8 @@ def handle_text_message(event):
       new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
+      unique_stu_okQnum = numpy.unique(new_stu_okQnum)
+      new_okQnum_list = json.dumps(unique_stu_okQnum.tolist())
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
