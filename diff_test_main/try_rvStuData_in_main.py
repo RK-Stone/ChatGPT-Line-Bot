@@ -205,12 +205,12 @@ def handle_text_message(event):
     #隨機抽題目
     print("11110")
 
-    if get_allData(
-        user_id, count_okQ=1)["count_okQ"] >= len(questions_dic):  #若所有題目都回答正確
+    if int(get_allData(
+        user_id, count_okQ=1)["count_okQ"]) >= len(questions_dic):  #若所有題目都回答正確
       print("00003")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
-    elif get_allData(user_id,
-                     count_okQ=1)["count_okQ"] == 0:  #沒有題目回答正確 (回答正確的題目數=0)
+    elif int(get_allData(
+        user_id, count_okQ=1)["count_okQ"]) == 0:  #沒有題目回答正確 (回答正確的題目數=0)
       print("00004")
       print(get_allData(user_id, stu_ranQ=1)["stu_ranQ"])
       stu_nowq_dic = questions_dic[get_allData(user_id,
