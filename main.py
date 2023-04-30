@@ -63,10 +63,10 @@ def callback():
   return 'OK'
 
 
-# 每傳一次"文字"訊息判斷一次
+#每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-  print("00001")
+  #print("00001")
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
@@ -74,77 +74,94 @@ def handle_text_message(event):
   api_keys[user_id] = api_key  #直接註冊
 
   #抓時間
-  timestamp = event.timestamp  # 獲取當前時間的時間戳記
-  timestamp_seconds = timestamp / 1000  # 將毫秒轉換為秒
-  dt = datetime.datetime.fromtimestamp(timestamp_seconds)  # 將時間戳記轉換為datetime物件
-  time = dt.strftime("%Y-%m-%d %H:%M:%S")  # 將datetime物件轉換為指定格式的字串
+  timestamp = event.timestamp  #獲取當前時間的時間戳記
+  timestamp_seconds = timestamp / 1000  #將毫秒轉換為秒
+  dt = datetime.datetime.fromtimestamp(timestamp_seconds)  #將時間戳記轉換為datetime物件
+  time = dt.strftime("%Y-%m-%d %H:%M:%S")  #將datetime物件轉換為指定格式的字串
   #抓時間
 
   global ran_q
   msg = []
   actions = []
 
-  # 定義存入學生回應訊息(ID、時間、訊息)
+  #定義存入學生回應訊息(ID、時間、訊息)
   def stuResp(user_id, time, text, sys):
-    os.makedirs("sturesp/allresp", exist_ok=True)
-    with open(f"sturesp/allresp/{user_id}.txt", mode="a+",
-              encoding="utf8") as resp:
+    with open(f"sturesp/allresp/{user_id}.txt", mode="a+", encoding="utf8") as resp:
       tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
       resp.write(str(tg_text) + '\n')
+  #定義 存入學生回應訊息(ID、時間、訊息)
 
-  # 定義 存入學生回應訊息(ID、時間、訊息)
-
-  # 答對的題庫 若還沒有就可在此先創建
+  #答對的題號庫 若還沒有就可在此先創建
   with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
     Q.read()
-
-  # 定義 答對的題庫
+  #定義 答對的題號庫
   def okQ(user_id, okQnum):
-    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as okQnum_dic:
       tg_text = "q" + str(okQnum)
-      Q.write(tg_text + '\n')
+      okQnum_dic.write(tg_text + '\n')
+  #答對的題號庫
 
-  # 答對的題庫
-
+  #學生當前題號 若還沒有就可在此先創建
   with open(f"sturesp/ranQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
     f.write('')
-  
+  #定義 學生當前題號
   def ranQ(user_id, stu_ranQ):
     with open(f"sturesp/ranQ/{user_id}.txt", mode="w", encoding='utf8') as f:
-      f.write(stu_ranQ + '\n')
-
+      f.write(stu_ranQ + '\n')   #將當前隨機抓取的題號存入 學生當前題號
+  #學生當前題號
         
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
 
+  
+  
+  #調用題目
   if text.startswith('「題目」'):
     #print("00002")
-    global ran_q, numsQ, ran_numsQ, count
     
-    with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
-      global count
-      count = 0
-      for line in f:
-        count += 1
-        
-    numsQ = []
+    #宣告全域變數 調用答案時 才可用
+    global ran_q, numsQ, ran_numsQ, count_okQ, okQnum_list
+    
+    #將okQ內的題號讀出　計算各題號出現次數
+    with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as okQnum_dic:
+      global count_okQ, okQnum_list
+      okQnum_list = []
+      for okQnum in okQnum_dic:
+        okQnum_list.append(okQnum)
+      count_okQ = len(numpy.unique(okQnum_list))   #做對的題數:count_okQ   #做對的題號們:okQnum_list
+    
+    #隨機抽題目    
+    numsQ = []   #抽題號的list
     for i in range(len(questions_dic)):
-      numsQ.append(i + 1)   #創抽取題號的list [1, 2, 3, .....]
-
-    ran_numsQ = random.choice(numsQ)   #隨機抽題號
+      numsQ.append(i + 1)   #[1, 2, 3, .....]
+    
+    ran_numsQ = random.choice(numsQ)   #抽題號
     #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
-    ranQ(user_id, "q" + str(ran_numsQ))
+    ranQ(user_id, "q" + str(ran_numsQ))   #將隨機抽的q+題號存入 學生當前題號
     with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as f:
       global get_ranQ
       get_ranQ = f.read()
+      
+      
+      
+      #with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as okQnum_dic:
+      #global count_okQ, count_list, count_okQ_unique
+      #count_list = []
+      #for okQnum in okQnum_dic:
+      #  count_list.append(okQnum)
+      #count_okQ_unique = dict(zip(*numpy.unique(count_list, return_counts=True)))
+      #count_okQ = len(count_okQ_unique)   #做對的題數
+      
+      
+      
       
     get_ranQ_noN = get_ranQ[:-1]
     global stu_nowq_dic
     stu_nowq_dic = questions_dic[str(get_ranQ_noN)] 
   
     
-    if count == len(questions_dic):  #若所有題目都回答正確
+    if count_okQ == len(questions_dic):  #若所有題目都回答正確
       #print("00003")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
     elif count == 0:  #沒有題目回答正確 (回答正確的題目數=0)
@@ -173,11 +190,11 @@ def handle_text_message(event):
         for line in globalFile:
           globalglobalFile.append(line)
         while True:
-          print(globalglobalFile)
+          #print(globalglobalFile)
           if get_ranQ in globalglobalFile:
-            print("00007")
-            print(f"{get_ranQ}")
-            print(globalglobalFile)
+            #print("00007")
+            #print(f"{get_ranQ}")
+            #print(globalglobalFile)
             ran_numsQ = random.choice(numsQ)   #隨機抽題號
             #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
             ranQ(user_id, "q" + str(ran_numsQ))
@@ -185,8 +202,8 @@ def handle_text_message(event):
               get_ranQ = ff.read()
             get_ranQ_noN = get_ranQ[:-1]
             stu_nowq_dic = questions_dic[str(get_ranQ_noN)]
-            print(f"{get_ranQ}")
-            print(globalglobalFile)
+            #print(f"{get_ranQ}")
+            #print(globalglobalFile)
           else:
             break
         for option in ['A', 'B', 'C', 'D']:
@@ -204,6 +221,9 @@ def handle_text_message(event):
         msg.append(message)
         stuResp(user_id, time,
                 f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}", "(系統)")
+  #調用題目
+  
+  
           
   #調用答案
   elif text.startswith('(A) '):
