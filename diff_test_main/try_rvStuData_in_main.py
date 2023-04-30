@@ -125,7 +125,7 @@ def handle_text_message(event):
                      count_okQ=None):
     revise_new_allData = {}
     print("9999")
-    with open(f"sturesp/allData/{user_id}.json", mode="a") as rv_allData_file:
+    with open(f"sturesp/allData/{user_id}.json", mode="r") as rv_allData_file:
       print("9998")
       rAllData = json.load(rv_allData_file)
       print("9990")
@@ -269,16 +269,18 @@ def handle_text_message(event):
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       rvStuData(user_id,
-                stu_okQnum=json.dump(get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      new_stu_okQnum = json.dump(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
+                stu_okQnum=json.dump(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
+      new_stu_okQnum = json.dump(
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
       new_okQnum_list = numpy.unique(new_stu_okQnum)
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
-                count_okQ=json.dump(len(
-                  get_allData(user_id, okQnum_list=1)["okQnum_list"])))
+                count_okQ=json.dump(
+                  len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
       print("777777")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
@@ -290,16 +292,18 @@ def handle_text_message(event):
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       rvStuData(user_id,
-                stu_okQnum=json.dump(get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      new_stu_okQnum = json.dump(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
+                stu_okQnum=json.dump(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
+      new_stu_okQnum = json.dump(
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
       new_okQnum_list = numpy.unique(new_stu_okQnum)
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
-                count_okQ=json.dump(len(
-                  get_allData(user_id, okQnum_list=1)["okQnum_list"])))
+                count_okQ=json.dump(
+                  len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
       print("777777")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
@@ -311,16 +315,18 @@ def handle_text_message(event):
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       rvStuData(user_id,
-                stu_okQnum=json.dump(get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      new_stu_okQnum = json.dump(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
+                stu_okQnum=json.dump(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
+      new_stu_okQnum = json.dump(
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
       new_okQnum_list = numpy.unique(new_stu_okQnum)
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
-                count_okQ=json.dump(len(
-                  get_allData(user_id, okQnum_list=1)["okQnum_list"])))
+                count_okQ=json.dump(
+                  len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
       print("777777")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
@@ -332,16 +338,18 @@ def handle_text_message(event):
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
       rvStuData(user_id,
-                stu_okQnum=json.dump(get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      new_stu_okQnum = json.dump(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
+                stu_okQnum=json.dump(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
+      new_stu_okQnum = json.dump(
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
       new_okQnum_list = numpy.unique(new_stu_okQnum)
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
-                count_okQ=json.dump(len(
-                  get_allData(user_id, okQnum_list=1)["okQnum_list"])))
+                count_okQ=json.dump(
+                  len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
       print("777777")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
