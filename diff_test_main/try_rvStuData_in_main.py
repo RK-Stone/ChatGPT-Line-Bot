@@ -315,18 +315,18 @@ def handle_text_message(event):
       stuResp(user_id, time, "答對了！", "(系統)")
       print("inininin777")
       rvStuData(user_id,
-                stu_okQnum=json.dump(
+                stu_okQnum=json.dumps(
                   get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
       print("777inininin")
-      new_stu_okQnum = json.dump(
+      new_stu_okQnum = json.dumps(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
-      new_okQnum_list = numpy.unique(new_stu_okQnum)
+      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum))
       print("77")
       rvStuData(user_id, okQnum_list=new_okQnum_list)
       print("7")
       rvStuData(user_id,
-                count_okQ=json.dump(
+                count_okQ=json.dumps(
                   len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
       print("777777")
     else:
