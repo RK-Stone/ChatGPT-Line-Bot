@@ -212,6 +212,7 @@ def handle_text_message(event):
     elif get_allData(user_id,
                      count_okQ=1)["count_okQ"] == 0:  #沒有題目回答正確 (回答正確的題目數=0)
       print("00004")
+      print(get_allData(user_id, stu_ranQ=1)["stu_ranQ"])
       stu_nowq_dic = questions_dic[get_allData(user_id,
                                                stu_ranQ=1)["stu_ranQ"]]
       for option in ['A', 'B', 'C', 'D']:
@@ -309,12 +310,14 @@ def handle_text_message(event):
 
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
     stu_nowq_dic = questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]
-    if 'C' == questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['a']:
+    if 'C' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
+      print("inininin777")
       rvStuData(user_id,
                 stu_okQnum=json.dump(
                   get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
+      print("777inininin")
       new_stu_okQnum = json.dump(
         get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
       print("777")
