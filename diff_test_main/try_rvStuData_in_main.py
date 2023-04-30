@@ -168,11 +168,9 @@ def handle_text_message(event):
   def write_allData(new_allData):
     print("9996")
     with open(f"sturesp/allData/{user_id}.json",
-              mode="w+") as write_allData_file:
+              mode="w") as write_allData_file:
       print("9995")
-      load_write_allData_file = json.load(write_allData_file)
-      print("9999999")
-      json.dump(new_allData, load_write_allData_file)
+      json.dump(new_allData, write_allData_file)
       print("9994")
 
   #定義 寫入更新資料
