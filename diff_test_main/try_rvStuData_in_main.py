@@ -65,7 +65,7 @@ def callback():
   return 'OK'
 
 
-# 每傳一次"文字"訊息判斷一次
+#每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
   print("00000")
@@ -88,7 +88,7 @@ def handle_text_message(event):
   msg = []
   actions = []
 
-  # 定義存入學生回應訊息(ID、時間、訊息)
+  #定義存入學生回應訊息(ID、時間、訊息)
   def stuResp(user_id, time, text, sys):
     os.makedirs("sturesp/allresp", exist_ok=True)
     with open(f"sturesp/allresp/{user_id}.txt", mode="a+",
@@ -96,7 +96,7 @@ def handle_text_message(event):
       tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
       resp.write(str(tg_text) + '\n')
 
-  # 定義 存入學生回應訊息(ID、時間、訊息)
+  #定義 存入學生回應訊息(ID、時間、訊息)
 
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
@@ -104,16 +104,16 @@ def handle_text_message(event):
 
   #確認學生總資料是否存在
   if not os.path.exists(f"sturesp/allData/{user_id}.json"):
-    with open(f"sturesp/allData/{user_id}.json", mode="a") as exist_file:
-      json.dump(
-        {
-          f"{user_id}": {
-            "stu_okQnum": [],
-            "stu_ranQ": "",
-            "okQnum_list": [],
-            "count_okQ": 0
-          }
-        }, exist_file)
+    exist_file = open(f"sturesp/allData/{user_id}.json", mode="a")
+    json.dump(
+      {
+        f"{user_id}": {
+          "stu_okQnum": [],
+          "stu_ranQ": "",
+          "okQnum_list": [],
+          "count_okQ": 0
+        }
+      }, exist_file)
     exist_file.close()
   #確認學生總資料是否存在
 
@@ -125,55 +125,32 @@ def handle_text_message(event):
                      count_okQ=None):
     revise_new_allData = {}
     print("9999")
-    with open(f"sturesp/allData/{user_id}.json", mode="r") as rv_allData_file:
-      print("9998")
-      rAllData = json.load(rv_allData_file)
-      print("9990")
-      if stu_okQnum != None:
-        rAllData[user_id]["stu_okQnum"].append(stu_okQnum)
-      if stu_ranQ != None:
-        rAllData[user_id]["stu_ranQ"] = stu_ranQ  #OK
-      if okQnum_list != None:
-        rAllData[user_id]["okQnum_list"] = okQnum_list
-      if count_okQ != None:
-        rAllData[user_id]["count_okQ"] = count_okQ
-      revise_new_allData = rAllData
-      print("9997")
+    rv_allData_file = open(f"sturesp/allData/{user_id}.json", mode="r")
+    print("9998")
+    rAllData = json.load(rv_allData_file)
+    print("9990")
+    if stu_okQnum != None:
+      rAllData[user_id]["stu_okQnum"].append(stu_okQnum)
+    if stu_ranQ != None:
+      rAllData[user_id]["stu_ranQ"] = stu_ranQ  #OK
+    if okQnum_list != None:
+      rAllData[user_id]["okQnum_list"] = okQnum_list
+    if count_okQ != None:
+      rAllData[user_id]["count_okQ"] = count_okQ
+    revise_new_allData = rAllData
+    print("9997")
     rv_allData_file.close()
     return revise_new_allData
 
   #定義 寫入新資料
 
-  #定義 抓取資料
-  def get_allData(user_id,
-                  stu_okQnum=None,
-                  stu_ranQ=None,
-                  okQnum_list=None,
-                  count_okQ=None):
-    with open(f"sturesp/allData/{user_id}.json", mode="r") as get_allData_file:
-      rAllData = json.load(get_allData_file)
-      get_new_allData = {}
-      if stu_okQnum != None:
-        get_new_allData["stu_okQnum"] = rAllData[user_id]["stu_okQnum"]
-      if stu_ranQ != None:
-        get_new_allData["stu_ranQ"] = rAllData[user_id]["stu_ranQ"]
-      if okQnum_list != None:
-        get_new_allData["okQnum_list"] = rAllData[user_id]["okQnum_list"]
-      if count_okQ != None:
-        get_new_allData["count_okQ"] = rAllData[user_id]["count_okQ"]
-    get_allData_file.close()
-    return get_new_allData
-
-  #定義 抓取資料
-
   #定義 寫入更新資料
   def write_allData(new_allData):
     print("9996")
-    with open(f"sturesp/allData/{user_id}.json",
-              mode="w") as write_allData_file:
-      print("9995")
-      json.dump(new_allData, write_allData_file)
-      print("9994")
+    write_allData_file = open(f"sturesp/allData/{user_id}.json", mode="w")
+    print("9995")
+    json.dump(new_allData, write_allData_file)
+    print("9994")
     write_allData_file.close()
 
   #定義 寫入更新資料
@@ -191,6 +168,28 @@ def handle_text_message(event):
     print("9992")
 
   #定義 更新資料
+
+  #定義 抓取資料
+  def get_allData(user_id,
+                  stu_okQnum=None,
+                  stu_ranQ=None,
+                  okQnum_list=None,
+                  count_okQ=None):
+    get_allData_file = open(f"sturesp/allData/{user_id}.json", mode="r")
+    rAllData = json.load(get_allData_file)
+    get_new_allData = {}
+    if stu_okQnum != None:
+      get_new_allData["stu_okQnum"] = rAllData[user_id]["stu_okQnum"]
+    if stu_ranQ != None:
+      get_new_allData["stu_ranQ"] = rAllData[user_id]["stu_ranQ"]
+    if okQnum_list != None:
+      get_new_allData["okQnum_list"] = rAllData[user_id]["okQnum_list"]
+    if count_okQ != None:
+      get_new_allData["count_okQ"] = rAllData[user_id]["count_okQ"]
+    get_allData_file.close()
+    return get_new_allData
+
+  #定義 抓取資料
 
   if text.startswith('「題目」'):
     print("00001")
