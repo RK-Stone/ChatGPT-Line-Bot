@@ -17,6 +17,7 @@ import json  #json
 import datetime  #轉換時間戳記
 import codecs  #ASCII
 import pandas as pd
+import pytz  #時區轉換
 
 from src.models import OpenAIModel
 from src.memory import Memory
@@ -63,7 +64,7 @@ def callback():
   return 'OK'
 
 
-#每傳一次"文字"訊息判斷一次
+# 每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
   #print("00001")
@@ -74,94 +75,77 @@ def handle_text_message(event):
   api_keys[user_id] = api_key  #直接註冊
 
   #抓時間
-  timestamp = event.timestamp  #獲取當前時間的時間戳記
-  timestamp_seconds = timestamp / 1000  #將毫秒轉換為秒
-  dt = datetime.datetime.fromtimestamp(timestamp_seconds)  #將時間戳記轉換為datetime物件
-  time = dt.strftime("%Y-%m-%d %H:%M:%S")  #將datetime物件轉換為指定格式的字串
+  utc_time = datetime.datetime.utcnow()
+  utc_zone = pytz.timezone('UTC')
+  tw_zone = pytz.timezone('Asia/Taipei')
+  utc_dt = utc_zone.localize(utc_time)
+  tw_dt = utc_dt.astimezone(tw_zone)
+  time = tw_dt.strftime("%Y-%m-%d %H:%M:%S")
   #抓時間
 
   global ran_q
   msg = []
   actions = []
 
-  #定義存入學生回應訊息(ID、時間、訊息)
+  # 定義存入學生回應訊息(ID、時間、訊息)
   def stuResp(user_id, time, text, sys):
-    with open(f"sturesp/allresp/{user_id}.txt", mode="a+", encoding="utf8") as resp:
+    os.makedirs("sturesp/allresp", exist_ok=True)
+    with open(f"sturesp/allresp/{user_id}.txt", mode="a+",
+              encoding="utf8") as resp:
       tg_text = {"ID": f"{user_id}{sys}", "時間": time, "訊息": text}
       resp.write(str(tg_text) + '\n')
-  #定義 存入學生回應訊息(ID、時間、訊息)
 
-  #答對的題號庫 若還沒有就可在此先創建
+  # 定義 存入學生回應訊息(ID、時間、訊息)
+
+  # 答對的題庫 若還沒有就可在此先創建
   with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
     Q.read()
-  #定義 答對的題號庫
-  def okQ(user_id, okQnum):
-    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as okQnum_dic:
-      tg_text = "q" + str(okQnum)
-      okQnum_dic.write(tg_text + '\n')
-  #答對的題號庫
 
-  #學生當前題號 若還沒有就可在此先創建
+  # 定義 答對的題庫
+  def okQ(user_id, okQnum):
+    with open(f"sturesp/okQ/{user_id}.txt", mode="a+", encoding="utf8") as Q:
+      tg_text = "q" + str(okQnum)
+      Q.write(tg_text + '\n')
+
+  # 答對的題庫
+
   with open(f"sturesp/ranQ/{user_id}.txt", mode="a+", encoding='utf8') as f:
     f.write('')
-  #定義 學生當前題號
+
   def ranQ(user_id, stu_ranQ):
     with open(f"sturesp/ranQ/{user_id}.txt", mode="w", encoding='utf8') as f:
-      f.write(stu_ranQ + '\n')   #將當前隨機抓取的題號存入 學生當前題號
-  #學生當前題號
-        
+      f.write(stu_ranQ + '\n')
+
   #存個人發送的訊息
   stuResp(user_id, time, text, "")
   #存個人發送的訊息
 
-  
-  
-  #調用題目
   if text.startswith('「題目」'):
     #print("00002")
-    
-    #宣告全域變數 調用答案時 才可用
-    global ran_q, numsQ, ran_numsQ, count_okQ, okQnum_list
-    
-    #將okQ內的題號讀出　計算各題號出現次數
-    with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as okQnum_dic:
-      global count_okQ, okQnum_list
-      okQnum_list = []
-      for okQnum in okQnum_dic:
-        okQnum_list.append(okQnum)
-      count_okQ = len(numpy.unique(okQnum_list))   #做對的題數:count_okQ   #做對的題號們:okQnum_list
-    
-    #隨機抽題目    
-    numsQ = []   #抽題號的list
+    global ran_q, numsQ, ran_numsQ, count
+
+    with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as f:
+      global count
+      count = 0
+      for line in f:
+        count += 1
+
+    numsQ = []
     for i in range(len(questions_dic)):
-      numsQ.append(i + 1)   #[1, 2, 3, .....]
-    
-    ran_numsQ = random.choice(numsQ)   #抽題號
+      numsQ.append(i + 1)  #創抽取題號的list [1, 2, 3, .....]
+
+    ran_numsQ = random.choice(numsQ)  #隨機抽題號
     #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
-    ranQ(user_id, "q" + str(ran_numsQ))   #將隨機抽的q+題號存入 學生當前題號
+    ranQ(user_id, "q" + str(ran_numsQ))
     with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as f:
       global get_ranQ
       get_ranQ = f.read()
-      
-      
-      
-      #with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as okQnum_dic:
-      #global count_okQ, count_list, count_okQ_unique
-      #count_list = []
-      #for okQnum in okQnum_dic:
-      #  count_list.append(okQnum)
-      #count_okQ_unique = dict(zip(*numpy.unique(count_list, return_counts=True)))
-      #count_okQ = len(count_okQ_unique)   #做對的題數
-      
-      
-      
-      
+
     get_ranQ_noN = get_ranQ[:-1]
     global stu_nowq_dic
-    stu_nowq_dic = questions_dic[str(get_ranQ_noN)] 
-  
-    
-    if count_okQ == len(questions_dic):  #若所有題目都回答正確
+    stu_nowq_dic = questions_dic[str(get_ranQ_noN)]
+
+    if count >= len(questions_dic):  #若所有題目都回答正確
       #print("00003")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
     elif count == 0:  #沒有題目回答正確 (回答正確的題目數=0)
@@ -179,31 +163,34 @@ def handle_text_message(event):
                                     '\n選項：' + str(stu_nowq_dic['options']),
                                     template=template)
       msg.append(message)
-      stuResp(user_id, time, f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
+      stuResp(user_id, time,
+              f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
               "(系統)")
     else:  #有題目沒答完
       #print("00005")
-      with open(f"sturesp/okQ/{user_id}.txt", mode="r", encoding='utf8') as globalFile:
+      with open(f"sturesp/okQ/{user_id}.txt", mode="r",
+                encoding='utf8') as globalFile:
         #print("00006")
         global globalglobalFile
         globalglobalFile = []
         for line in globalFile:
           globalglobalFile.append(line)
         while True:
-          #print(globalglobalFile)
+          print(globalglobalFile)
           if get_ranQ in globalglobalFile:
-            #print("00007")
-            #print(f"{get_ranQ}")
-            #print(globalglobalFile)
-            ran_numsQ = random.choice(numsQ)   #隨機抽題號
+            print("00007")
+            print(f"{get_ranQ}")
+            print(globalglobalFile)
+            ran_numsQ = random.choice(numsQ)  #隨機抽題號
             #ran_q_dic = questions_dic["q" + str(ran_numsQ)]
             ranQ(user_id, "q" + str(ran_numsQ))
-            with open(f"sturesp/ranQ/{user_id}.txt", mode="r", encoding='utf8') as ff:
+            with open(f"sturesp/ranQ/{user_id}.txt", mode="r",
+                      encoding='utf8') as ff:
               get_ranQ = ff.read()
             get_ranQ_noN = get_ranQ[:-1]
             stu_nowq_dic = questions_dic[str(get_ranQ_noN)]
-            #print(f"{get_ranQ}")
-            #print(globalglobalFile)
+            print(f"{get_ranQ}")
+            print(globalglobalFile)
           else:
             break
         for option in ['A', 'B', 'C', 'D']:
@@ -220,11 +207,9 @@ def handle_text_message(event):
                                       template=template)
         msg.append(message)
         stuResp(user_id, time,
-                f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}", "(系統)")
-  #調用題目
-  
-  
-          
+                f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
+                "(系統)")
+
   #調用答案
   elif text.startswith('(A) '):
     if 'A' == stu_nowq_dic['a']:
@@ -314,10 +299,6 @@ def handle_text_message(event):
         msg = TextSendMessage(text='歷史訊息清除成功')
 
       elif text.startswith('「圖像」'):
-        #強制註冊
-        #api_key = text[3:].strip()
-        api_key = 'your api keys'
-        #強制正確
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
         if not is_successful:
@@ -369,7 +350,6 @@ def handle_text_message(event):
         print('(系統:', '影片', ')')
         #存系統發送的訊息
 
-      
       #呼叫OpenAI
       else:
         #增加SYSTEM_MESSAGE
@@ -377,7 +357,7 @@ def handle_text_message(event):
         QtoSM = '當前題目' + stu_nowq_dic['q']
         memory.change_system_message(user_id, QtoSM + SM)
         #增加SYSTEM_MESSAGE
-        
+
         model = OpenAIModel(api_key=api_key)
         is_successful, _, _ = model.check_token_valid()
         if not is_successful:
@@ -422,66 +402,13 @@ def handle_text_message(event):
         msg = TextSendMessage(text=str(e))
     #msg訊息格式錯誤回傳
 
-  
-  print(count)
+  #print(count)
 
   #送出給LINE
-  line_bot_api.reply_message(event.reply_token, msg) 
+  line_bot_api.reply_message(event.reply_token, msg)
   #送出給LINE
 
 
-  
-  # 檢查檔案是否存在，如果存在就讀取之前的資料，否則建立一個新的檔案
-  if os.path.isfile('sturecord.html'):
-    with open('sturecord.html', 'r', encoding='utf-8') as f:
-      previous_data = f.readlines()
-      # 只保留前54行的內容
-      previous_data = previous_data[:54]
-  else:
-    previous_data = []
-
-  # 取得路徑下所有的txt檔案
-  txt_files = [f for f in os.listdir('sturesp/allresp') if f.endswith('.txt')]
-
-  # 創建一個 dictionary 來儲存每個使用者最新的 DataFrame
-  user_tables = {}
-
-  # 逐一讀取每個txt檔案，整理成DataFrame，並存儲在 user_tables 中
-  for txt_file in txt_files:
-    user_id = txt_file.split('.')[0]
-    with open(f'sturesp/allresp/{txt_file}', 'r') as f:
-      data = [eval(line) for line in f]
-
-    # 提取 ID、時間、訊息
-    rows = []
-    for item in data:
-      rows.append({'ID': item['ID'], '時間': item['時間'], '訊息': item['訊息']})
-
-    # 將資料轉換成 DataFrame
-    df = pd.DataFrame(rows)
-
-    # 如果使用者已經有表格，則將新的訊息更新至原表格，否則就新增一個新表格
-    if user_id in user_tables:
-      # 找出更新後的資料
-      updated_df = df[df['時間'] > user_tables[user_id]['時間'].max()]
-      if not updated_df.empty:
-        # 將更新後的表格與原本的表格合併
-        user_tables[user_id] = pd.concat([user_tables[user_id], updated_df])
-    else:
-      user_tables[user_id] = df
-
-  # 將每個使用者的 DataFrame 轉換成 HTML 表格，並連接起來
-  html_tables = []
-  for user_id, df in user_tables.items():
-    html_tables.append(f"<h2>{user_id}</h2>" + df.to_html(index=False))
-
-  all_html_tables = '<br>'.join(html_tables)
-
-  # 在 sturecord.html 檔案的末尾繼續添加 HTML 表格
-  with open('sturecord.html', 'w', encoding='utf-8') as f:
-    # 將表格包裝在一個<div>元素中，加上padding-left樣式屬性讓表格向右移
-    html = f"<div style='text-align:center; padding-left: 50px;'>{all_html_tables}</div>"
-    f.write(''.join(previous_data) + html)
 
 
 @handler.add(MessageEvent, message=AudioMessage)
@@ -518,7 +445,7 @@ def handle_audio_message(event):
     else:
       msg = TextSendMessage(text=str(e))
   os.remove(input_audio_path)
-  
+
   line_bot_api.reply_message(event.reply_token, msg)
 
 
