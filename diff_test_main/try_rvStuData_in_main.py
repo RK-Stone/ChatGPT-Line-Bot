@@ -44,7 +44,7 @@ memory = Memory(system_message=os.getenv('SYSTEM_MESSAGE'),
                 memory_message_count=2)
 model_management = {}
 api_keys = {}
-api_key = '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'  #直接在這裡改
+api_key = ''  #直接在這裡改
 
 
 @app.route("/callback", methods=['POST'])
