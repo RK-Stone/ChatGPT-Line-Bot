@@ -37,17 +37,14 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET'))
 storage = Storage('db.json')
-
-# 新增 SYSTEM_MESSAGE
+#新立的變數
 SM = 'You are an elementary school teacher.Answer in a way that elementary school students can understand.Answers should be short and precise.Unless it is a question that should be answered in English, it should be answered in Traditional Chinese.Give the best answer and avoid answers that may be wrong.Responses should be consistent and coherent.1公頃等於100公畝。40%off是打六折的意思。'
-# 新增 SYSTEM_MESSAGE
-
+#
 memory = Memory(system_message=os.getenv('SYSTEM_MESSAGE'),
                 memory_message_count=2)
 model_management = {}
-
 api_keys = {}
-api_key = 'your api keys'  #直接在這裡改
+api_key = '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'  #直接在這裡改
 
 
 @app.route("/callback", methods=['POST'])
@@ -65,10 +62,9 @@ def callback():
   return 'OK'
 
 
-#每傳一次"文字"訊息判斷一次
 @handler.add(MessageEvent, message=TextMessage)
+#收到訊息
 def handle_text_message(event):
-  print("071 <訊息傳入>")
   user_id = event.source.user_id
   text = event.message.text.strip()
   logger.info(f'{user_id}: {text}')
@@ -103,8 +99,11 @@ def handle_text_message(event):
   #存個人發送的訊息
 
   #確認學生總資料是否存在
+  print("102 確認學生總資料是否存在")
   if not os.path.exists(f"sturesp/allData/{user_id}.json"):
+    print("\t檔案不存在")
     exist_file = open(f"sturesp/allData/{user_id}.json", mode="a")
+    print("\ta檔案")
     json.dump(
       {
         f"{user_id}": {
@@ -124,34 +123,43 @@ def handle_text_message(event):
                      okQnum_list=None,
                      count_okQ=None):
     revise_new_allData = {}
-    print("127 ---寫入新資料 open")
+    print("126 寫入新資料")
+    print("\tr檔")
     rv_allData_file = open(f"sturesp/allData/{user_id}.json", mode="r")
-    print("129 寫入新資料 load")
+    print("\tload檔")
     rAllData = json.load(rv_allData_file)
-    print("132-140 寫入新資料 修改資料")
     if stu_okQnum != None:
-      rAllData[user_id]["stu_okQnum"].append(stu_okQnum)
+      rAllData[user_id]["stu_okQnum"].append(stu_okQnum.replace('"', ''))
+      #print("\tstu_okQnum:", stu_okQnum.replace('"', ''))
     if stu_ranQ != None:
-      rAllData[user_id]["stu_ranQ"] = stu_ranQ
+      rAllData[user_id]["stu_ranQ"] = stu_ranQ.replace('"', '')  #OK
+      #print("\tstu_ranQ:", stu_ranQ.replace('"', ''))
     if okQnum_list != None:
-      rAllData[user_id]["okQnum_list"] = okQnum_list
+      rAllData[user_id]["okQnum_list"].append(okQnum_list.replace('"', ''))
+      #print("\tokQnum_list:", okQnum_list.replace('"', ''))
     if count_okQ != None:
-      rAllData[user_id]["count_okQ"] = count_okQ
+      rAllData[user_id]["count_okQ"] = count_okQ.replace('"', '')
+      #print("\tcount_okQ:", count_okQ.replace('"', ''))
+    print("\t覆寫字典revise_new_allData")
     revise_new_allData = rAllData
     rv_allData_file.close()
-    print("141 ---寫入新資料 close()")
+    print("146 回傳字典revise_new_allData長這樣:",revise_new_allData)
     return revise_new_allData
-
   #定義 寫入新資料
 
   #定義 寫入更新資料
   def write_allData(new_allData):
-    print("150 ---寫入更新資料 open()")
+    print("152 w檔案")
     write_allData_file = open(f"sturesp/allData/{user_id}.json", mode="w")
-    print("152 寫入更新資料 json.dump")
+    #print("\t傳入的長這樣:",new_allData)
+    
+    for key, value in new_allData.items():#去除重複元素
+      value["stu_okQnum"] = list(set(value["stu_okQnum"]))
+      value["okQnum_list"] = list(set(value["okQnum_list"]))
+    
     json.dump(new_allData, write_allData_file)
+    print("156 w檔案成功")
     write_allData_file.close()
-    print("154 ---寫入更新資料 close()")
 
   #定義 寫入更新資料
 
@@ -162,10 +170,10 @@ def handle_text_message(event):
                 okQnum_list=None,
                 count_okQ=None):
     #更新資料
-    print("166 ------更新資料------")
+    print("168呼叫revise_allData跟write_allData")
     write_allData(
       revise_allData(user_id, stu_okQnum, stu_ranQ, okQnum_list, count_okQ))
-    print("166 ------更新資料完成------")
+    print("171呼叫revise_allData跟write_allData成功")
 
   #定義 更新資料
 
@@ -175,12 +183,13 @@ def handle_text_message(event):
                   stu_ranQ=None,
                   okQnum_list=None,
                   count_okQ=None):
-    print("178 ---抓取資料 open()")
+    print("181 抓取檔案資料get_allData")
+    print("\tr檔案")
     get_allData_file = open(f"sturesp/allData/{user_id}.json", mode="r")
-    print("180 抓取資料 load()")
+    print("\tload檔案")
     rAllData = json.load(get_allData_file)
+    print("\t寫入字典")
     get_new_allData = {}
-    print("182 抓取資料 修改資料")
     if stu_okQnum != None:
       get_new_allData["stu_okQnum"] = rAllData[user_id]["stu_okQnum"]
     if stu_ranQ != None:
@@ -190,41 +199,39 @@ def handle_text_message(event):
     if count_okQ != None:
       get_new_allData["count_okQ"] = rAllData[user_id]["count_okQ"]
     get_allData_file.close()
+    #print("197 抓取檔案資料成功，回傳字典get_new_allData長這樣:",get_new_allData)
     return get_new_allData
-    print("191 ---抓取資料 close()")
 
   #定義 抓取資料
 
   if text.startswith('「題目」'):
-    print("197 <題目>")
     #隨機抽題目
+    print("204 隨機抽題號")
     global numsQ, ran_numsQ
     numsQ = []
     for i in range(len(questions_dic)):
       numsQ.append(i + 1)  #創抽取題號的list [1, 2, 3, .....]
     ran_numsQ = random.choice(numsQ)  #隨機抽題號
-    print("206 更新資料 更新stu_ranQ")
+    print("\t呼叫rvStuData")
     rvStuData(user_id, stu_ranQ="q" + str(ran_numsQ))  #更新stu_ranQ
-    print("208 抽對應題目 抓取stu_ranQ")
-    stu_nowq_dic = questions_dic[get_allData(
-      user_id, stu_ranQ=1)["stu_ranQ"]]  #抽對應題目 抓取stu_ranQ
+    print("212抽對應題目進stu_nowq_dic")
+    stu_nowq_dic = questions_dic[get_allData(user_id,
+                                             stu_ranQ=1)["stu_ranQ"]]  #抽對應題目
     #隨機抽題目
 
-    print("count_okQ：", end='')
-    print(type(get_allData(user_id, count_okQ=1)["count_okQ"]))
-    print(get_allData(user_id, count_okQ=1)["count_okQ"])
+    print("\t判斷答題次數(1答完)")
+    print("\t判斷答題次數(2沒有題目回答正確)")
+    print("\t判斷答題次數(3有題目沒答完)")
     if int(get_allData(
         user_id, count_okQ=1)["count_okQ"]) >= len(questions_dic):  #若所有題目都回答正確
+      print("222恭喜你~已經完成今天的題目囉！")
       msg = TextSendMessage(text="恭喜你~已經完成今天的題目囉！")
     elif int(get_allData(
         user_id, count_okQ=1)["count_okQ"]) == 0:  #沒有題目回答正確 (回答正確的題目數=0)
-      print("沒有題目回答正確")
-      print("stu_ranQ：", end='')
-      print(get_allData(user_id, stu_ranQ=1)["stu_ranQ"])
-      print("223 抽對應題目 抓取stu_ranQ")
+      print("226回答正確的題目數=0")
+      #print(get_allData(user_id, stu_ranQ=1)["stu_ranQ"])
       stu_nowq_dic = questions_dic[get_allData(user_id,
                                                stu_ranQ=1)["stu_ranQ"]]
-      print("225-240 題目選單")
       for option in ['A', 'B', 'C', 'D']:
         action = PostbackTemplateAction(
           label=f"({option}) {stu_nowq_dic['options'][option]}",
@@ -242,16 +249,13 @@ def handle_text_message(event):
               f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
               "(系統)")
     else:  #有題目沒答完
-      print("有題目沒答完")
       while True:
-        print("245-251 判斷題號答對沒")
+        print("248 看是否重複抽題")
         if get_allData(user_id, stu_ranQ=1)["stu_ranQ"] in get_allData(
             user_id, stu_okQnum=1)["stu_okQnum"]:
-          #重新抽題
-          print("249 重新抽題 更新當前題號")
+          print("250 重新抽題")
           ran_numsQ = random.choice(numsQ)
           rvStuData(user_id, stu_ranQ="q" + str(ran_numsQ))
-          print("250 重抽題")
           stu_nowq_dic = questions_dic[get_allData(user_id,
                                                    stu_ranQ=1)["stu_ranQ"]]
         else:
@@ -274,186 +278,151 @@ def handle_text_message(event):
       stuResp(user_id, time,
               f"題目：{stu_nowq_dic['q']}選項：{str(stu_nowq_dic['options'])}",
               "(系統)")
-
   #調用答案
   elif text.startswith('(A) '):
+    print("278判斷答案")
     stu_nowq_dic = questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]
     if 'A' == questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      print("281 ------答對之後各種更新------")
-      print("281 更新資料stu_okQnum加入stu_ranQ")
+      print("283答對呼叫rvStuData")
       rvStuData(user_id,
-                stu_okQnum=json.dumps(
-                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      print("777inininin")
-      print(get_allData(user_id, stu_okQnum=1))
+                stu_okQnum=json.dumps(str(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]).replace('"', '')))
+      print("\tdumps進new_stu_okQnum")
       new_stu_okQnum = json.dumps(
-        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
-      print("777")
-      print(get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
-      print("77")
-      print(numpy.unique(new_stu_okQnum).tolist())
-      print(new_okQnum_list)
-      rvStuData(user_id, okQnum_list=new_okQnum_list)
-      print("7")
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"][0])
+      #print("290 new_stu_okQnum長這樣:", new_stu_okQnum)
+      #print("\tdumps進new_okQnum_list")
+      #new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
+      #print("\tstr(new_okQnum_list長這樣",str(new_okQnum_list))
+      #print("\tnew_okQnum_list長這樣",new_okQnum_list)
+      print("\t呼叫rvStuData")
+      rvStuData(user_id, okQnum_list=new_stu_okQnum)
+      print("\t再一次呼叫rvStuData")
       rvStuData(user_id,
                 count_okQ=json.dumps(
                   len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
-      print("777777")
+      print("成功!")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
       stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
-
+      print("答錯!")
   elif text.startswith('(B) '):  #換成一個變數，調出上一題的選項答案，以及詳解
+    print("278判斷答案")
     stu_nowq_dic = questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]
     if 'B' == questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      print("inininin777")
+      print("283答對呼叫rvStuData")
       rvStuData(user_id,
-                stu_okQnum=json.dumps(
-                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      print("777inininin")
+                stu_okQnum=json.dumps(str(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]).replace('"', '')))
+      print("\tdumps進new_stu_okQnum")
       new_stu_okQnum = json.dumps(
-        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
-      print("777")
-      unique_stu_okQnum = numpy.unique(new_stu_okQnum)
-      new_okQnum_list = json.dumps(unique_stu_okQnum.tolist())
-      print("77")
-      rvStuData(user_id, okQnum_list=new_okQnum_list)
-      print("7")
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"][0])
+      #print("290 new_stu_okQnum長這樣:", new_stu_okQnum)
+      print("\tdumps進new_okQnum_list")
+      #new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
+      #print("\tstr(new_okQnum_list長這樣",str(new_okQnum_list))
+      #print("\tnew_okQnum_list長這樣",new_okQnum_list)
+      print("\t呼叫rvStuData")
+      rvStuData(user_id, okQnum_list=new_stu_okQnum)
+      print("\t再一次呼叫rvStuData")
       rvStuData(user_id,
                 count_okQ=json.dumps(
                   len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
-      print("777777")
+      print("成功!")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
       stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
-
+      print("答錯!")
   elif text.startswith('(C) '):  #換成一個變數，調出上一題的選項答案，以及詳解
+    print("278判斷答案")
     stu_nowq_dic = questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]
     if 'C' == stu_nowq_dic['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      print("inininin777")
+      print("283答對呼叫rvStuData")
       rvStuData(user_id,
-                stu_okQnum=json.dumps(
-                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      print("777inininin")
+                stu_okQnum=json.dumps(str(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]).replace('"', '')))
+      print("\tdumps進new_stu_okQnum")
       new_stu_okQnum = json.dumps(
-        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
-      print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
-      print("77")
-      rvStuData(user_id, okQnum_list=new_okQnum_list)
-      print("7")
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"][0])
+      #print("290 new_stu_okQnum長這樣:", new_stu_okQnum)
+      print("\tdumps進new_okQnum_list")
+      #new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
+      #print("\tstr(new_okQnum_list長這樣",str(new_okQnum_list))
+      #print("\tnew_okQnum_list長這樣",new_okQnum_list)
+      print("\t呼叫rvStuData")
+      rvStuData(user_id, okQnum_list=new_stu_okQnum)
+      print("\t再一次呼叫rvStuData")
       rvStuData(user_id,
                 count_okQ=json.dumps(
                   len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
-      print("777777")
+      print("成功!")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
       stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
-
+      print("答錯!")
   elif text.startswith('(D) '):  #換成一個變數，調出上一題的選項答案，以及詳解
+    print("278判斷答案")
     stu_nowq_dic = questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]
     if 'D' == questions_dic[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['a']:
       msg = TextSendMessage(text="答對了！")
       stuResp(user_id, time, "答對了！", "(系統)")
-      print("inininin777")
+      print("283答對呼叫rvStuData")
       rvStuData(user_id,
-                stu_okQnum=json.dumps(
-                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]))
-      print("777inininin")
+                stu_okQnum=json.dumps(str(
+                  get_allData(user_id, stu_ranQ=1)["stu_ranQ"]).replace('"', '')))
+      print("\tdumps進new_stu_okQnum")
       new_stu_okQnum = json.dumps(
-        get_allData(user_id, stu_okQnum=1)["stu_okQnum"])
-      print("777")
-      new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
-      print("77")
-      rvStuData(user_id, okQnum_list=new_okQnum_list)
-      print("7")
+        get_allData(user_id, stu_okQnum=1)["stu_okQnum"][0])
+      #print("290 new_stu_okQnum長這樣:", new_stu_okQnum)
+      print("\tdumps進new_okQnum_list")
+      #new_okQnum_list = json.dumps(numpy.unique(new_stu_okQnum).tolist())
+      #print("\tstr(new_okQnum_list長這樣",str(new_okQnum_list))
+      #print("\tnew_okQnum_list長這樣",new_okQnum_list)
+      print("\t呼叫rvStuData")
+      rvStuData(user_id, okQnum_list=new_stu_okQnum)
+      print("\t再一次呼叫rvStuData")
       rvStuData(user_id,
                 count_okQ=json.dumps(
                   len(get_allData(user_id, okQnum_list=1)["okQnum_list"])))
-      print("777777")
+      print("成功!")
     else:
       msg = TextSendMessage(text="答錯了！" + str(stu_nowq_dic['tip']))
       stuResp(user_id, time, f"答錯了！{str(stu_nowq_dic['tip'])}", "(系統)")
+      print("答錯!")
   #調用答案
 
   else:
     #判讀文字前綴
     try:
-      if text.startswith('「註冊」'):
-        #強制正確
-        #api_key = text[3:].strip()
-        api_key = 'your api keys'
-        #強制正確
-        model = OpenAIModel(api_key=api_key)
-        is_successful, _, _ = model.check_token_valid()
-        if not is_successful:
-          raise ValueError('Invalid API token')
-        model_management[user_id] = model
-        api_keys[user_id] = api_key
-        storage.save(api_keys)
-        msg = TextSendMessage(text='Token 有效，註冊成功')
-
-      elif text.startswith('「說明」'):
+      if text.startswith('「說明」'):
         msg = TextSendMessage(text="""你好!我是「賴」學習!
 我是一個機器人，
 我會盡力回答你問我的任何問題，但回答需要一點時間，我一次只能回答一個問題喔~
-
 回家作業是以一次一題的方式進行，
 ❗按了之後就會直接送出並記錄分數且不能修改喔❗
 但就算答錯了也別灰心，看看解答，多多學習。
-
 當你準備好之後再開始下一題吧!
-
 ⬇下面是使用說明⬇
 圖文選單
 👉點擊圖片以觸發功能
 👉👉「說明」:呼叫使用說明
 👉👉「影片」:呼叫單元學習影片
 👉👉「題目」:呼叫回家作業
-
 輸入文字
 👉向機器人問問題""")
         #存系統發送的訊息
         stuResp(user_id, time, "說明", "(系統)")
         print('(系統:', '說明', ')')
         #存系統發送的訊息
-
-      elif text.startswith('「系統訊息」'):
-        memory.change_system_message(user_id, text[5:].strip())
-        msg = TextSendMessage(text='輸入成功')
-
       elif text.startswith('「清除」'):
         memory.remove(user_id)
         msg = TextSendMessage(text='歷史訊息清除成功')
-
-      elif text.startswith('「圖像」'):
-        model = OpenAIModel(api_key=api_key)
-        is_successful, _, _ = model.check_token_valid()
-        if not is_successful:
-          raise ValueError('Invalid API token')
-        model_management[user_id] = model
-        api_keys[user_id] = api_key
-        storage.save(api_keys)
-        #msg = TextSendMessage(text='Token 有效，註冊成功')
-        #強制註冊
-
-        prompt = text[3:].strip()
-        memory.append(user_id, 'user', prompt)
-        is_successful, response, error_message = model_management[
-          user_id].image_generations(prompt)
-        if not is_successful:
-          raise Exception(error_message)
-        url = response['data'][0]['url']
-        msg = ImageSendMessage(original_content_url=url, preview_image_url=url)
-        memory.append(user_id, 'assistant', url)
-
       elif text.startswith('「影片」'):
         msg = TemplateSendMessage(
           #text="""還沒有資源喔~\nhttps://youtu.be/MIR5zIpWBH0""")
