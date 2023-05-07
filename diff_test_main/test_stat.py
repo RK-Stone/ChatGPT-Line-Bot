@@ -8,10 +8,7 @@
                                        get_allData(user_id,
                                                    stu_ranQ=1)["stu_ranQ"])
       if count_FQnum_list == 0:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['A'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['A'].append(user_id)
         text_score = '太好了!第一次就答對了!(+3分)'
         score = 3
       elif count_FQnum_list == 1:
@@ -56,10 +53,7 @@
                                                    stu_ranQ=1)["stu_ranQ"])
       #print('\t錯了:', count_FQnum_list, '次')
       if count_FQnum_list == 1:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['A'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['A'].append(user_id)
         text_score = '答錯囉!冷靜檢查後再回答吧!'
       if count_FQnum_list == 2:
         text_score = '答錯囉!冷靜檢查後再回答吧!'
@@ -78,10 +72,7 @@
                                        get_allData(user_id,
                                                    stu_ranQ=1)["stu_ranQ"])
       if count_FQnum_list == 0:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['B'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['B'].append(user_id)
         text_score = '太好了!第一次就答對了!(+3分)'
         score = 3
       elif count_FQnum_list == 1:
@@ -126,10 +117,7 @@
                                                    stu_ranQ=1)["stu_ranQ"])
       #print('\t錯了:', count_FQnum_list, '次')
       if count_FQnum_list == 1:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['B'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['B'].append(user_id)
         text_score = '答錯囉!冷靜檢查後再回答吧!'
       if count_FQnum_list == 2:
         text_score = '答錯囉!冷靜檢查後再回答吧!'
@@ -148,10 +136,7 @@
                                        get_allData(user_id,
                                                    stu_ranQ=1)["stu_ranQ"])
       if count_FQnum_list == 0:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['C'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['C'].append(user_id)
         text_score = '太好了!第一次就答對了!(+3分)'
         score = 3
       elif count_FQnum_list == 1:
@@ -196,10 +181,7 @@
                                                    stu_ranQ=1)["stu_ranQ"])
       #print('\t錯了:', count_FQnum_list, '次')
       if count_FQnum_list == 1:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['C'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['C'].append(user_id)
         text_score = '答錯囉!冷靜檢查後再回答吧!'
       if count_FQnum_list == 2:
         text_score = '答錯囉!冷靜檢查後再回答吧!'
@@ -218,10 +200,7 @@
                                        get_allData(user_id,
                                                    stu_ranQ=1)["stu_ranQ"])
       if count_FQnum_list == 0:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['D'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['D'].append(user_id)
         text_score = '太好了!第一次就答對了!(+3分)'
         score = 3
       elif count_FQnum_list == 1:
@@ -266,10 +245,7 @@
                                                    stu_ranQ=1)["stu_ranQ"])
       #print('\t錯了:', count_FQnum_list, '次')
       if count_FQnum_list == 1:
-        questions_resp_stast[get_allData(user_id,
-                                     FQnum_list=1)["FQnum_list"].count(
-                                       get_allData(user_id,
-                                                   stu_ranQ=1)["stu_ranQ"])]['ans_1st']['D'].append(user_id)
+        questions_resp_stast[get_allData(user_id, stu_ranQ=1)["stu_ranQ"]]['ans_1st']['D'].append(user_id)
         text_score = '答錯囉!冷靜檢查後再回答吧!'
       if count_FQnum_list == 2:
         text_score = '答錯囉!冷靜檢查後再回答吧!'
