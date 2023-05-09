@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}學生紀錄{% endblock %}
+{% block content %}
+<h1>
+  <strong>學生紀錄</strong>
+</h1>
+<br>
+
+  <table id='stu-table1' class="table table-hover">
+    <thead class="table-secondary">
+      <tr>
+      <th scope="col">學生編號</th>
+      <th scope="col">目前分數</th>
+      <th scope="col">已答對題數</th>
+    </tr>
+  </thead>
+  <tbody class="table table-hover table-light table-striped-columns">
+    <style>
+        table {
+          width: 100%;
+        }
+        th, td {
+          text-align: left;
+          padding: 10px;
+        }
+    </style>
+    <script>
+    fetch('https://chatgpt-line-bot-zhuan-ti-withgpt-bycao-lao-da.rk-stone.repl.co/userData/')
+    .then(response => response.json())
+    .then(data => {
+      var table = document.getElementById("stu-table1").getElementsByTagName('tbody')[0];
+      for (var key in data) {
+        var row = "<tr>";
+        row += "<td>" + key + "</td>";
+        row += "<td>" + parseInt(data[key].stu_score) + "</td>";
+        row += "<td>" + parseInt(data[key].count_okQ) + "</td>";
+        row += "</tr>";
+        table.innerHTML += row;
+      }
+    });
+    </script>
+  </tbody>
+    <thead class="table-secondary">
+      <tr>
+      <th scope="col">人數</th>
+      <th scope="col">平均分數</th>
+      <th scope="col">平均答對題數</th>
+    </tr>
+  </thead>
+  <tbody class="table table-hover table-light table-striped-columns">
+    <style>
+        table {
+          width: 100%;
+        }
+        th, td {
+          text-align: left;
+          padding: 10px;
+        }
+    </style>
+    <script>
+    fetch('https://chatgpt-line-bot-zhuan-ti-withgpt-bycao-lao-da.rk-stone.repl.co/avergData/')
+    .then(response => response.json())
+    .then(data => {
+      var row = "<tr>";
+      row += "<td>" + data.stus + "</td>";
+      row += "<td>" + parseInt(data.allstu_score_averg) + "</td>";
+      row += "<td>" + parseInt(data.allstu_okQ_averg) + "</td>";
+      row += "</tr>";
+      document.getElementById("stu-table2").getElementsByTagName('tbody')[0].innerHTML += row;
+    });
+    </script>
+  </tbody>
+</table>
+
+{% endblock %}
